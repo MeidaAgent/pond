@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+
+<!-- Mirrored from useacre.xyz/app.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 31 Aug 2026 14:20:08 GMT -->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Pond application interface for supplying USDG and borrowing against tokenized real-world assets.">
+  <title>Pond App — Prototype</title>
+  <meta name="robots" content="noindex">
+<link rel="icon" href="assets/acre-mark-128.png">
+<link rel="stylesheet" href="styles614e.css?v=maxbtn_gap_v23">
+</head>
+<body class="appbody">
+<header class="apphead">
+  <a class="appbrand" href="index.html" aria-label="Pond Home"><img src="assets/acre-mark-128.png" alt="Pond logo"></a>
+  <div class="wallet">
+    <span>WALLET</span><strong data-wallet-address>Not connected</strong>
+    <span>NETWORK</span><strong data-network-status>Robinhood Chain</strong>
+  </div>
+  <div data-clock class="app-clock">
+    <div><span>SESSION</span><strong data-state>UNKNOWN</strong></div>
+    <div><span>NEXT OPEN</span><strong data-count>—</strong></div>
+    <div><span>CAPACITY</span><strong data-cap>—</strong></div>
+  </div>
+  <button class="connect-pill" type="button" data-connect>Connect wallet</button>
+  <a class="app-x" href="https://x.com/usePond" target="_blank" rel="noopener noreferrer" aria-label="Pond on X"><img src="assets/x.svg" alt=""></a>
+</header>
+
+<main class="appmain" data-app>
+
+  <div class="app-notice" data-preview-notice hidden>
+    <strong>Not connected to this network</strong>
+    <p>Pond is deployed on Robinhood Chain. Connect a wallet on that network to supply,
+       borrow, or view your position.</p>
+  </div>
+
+  <div class="app-notice is-warn" data-chain-warning hidden>
+    <strong>Wrong network</strong>
+    <p>Your wallet is connected to a different chain. Switch to Robinhood Chain to continue.</p>
+  </div>
+
+  <div class="app-notice is-warn" data-paused-notice hidden></div>
+
+  <div class="app-status" data-status hidden role="status" aria-live="polite"></div>
+
+  <!-- Positions in previous deployments. Hidden entirely unless the connected account
+       actually holds something in one. -->
+  <div data-legacy hidden></div>
+
+  <div class="tabs" role="tablist" aria-label="Pond application views">
+    <div class="tab-indicator" aria-hidden="true"></div>
+    <button id="tab-supply" class="tab" role="tab" data-v="supply" aria-selected="true" aria-controls="v-supply" tabindex="0">1 SUPPLY</button>
+    <button id="tab-borrow" class="tab" role="tab" data-v="borrow" aria-selected="false" aria-controls="v-borrow" tabindex="-1">2 BORROW</button>
+    <button id="tab-positions" class="tab" role="tab" data-v="positions" aria-selected="false" aria-controls="v-positions" tabindex="-1">3 POSITIONS</button>
+    <button id="tab-markets" class="tab" role="tab" data-v="markets" aria-selected="false" aria-controls="v-markets" tabindex="-1">4 MARKETS</button>
+    <button id="tab-protect" class="tab" role="tab" data-v="protect" aria-selected="false" aria-controls="v-protect" tabindex="-1">5 PROTECT</button>
+    <button id="tab-transfers" class="tab" role="tab" data-v="transfers" aria-selected="false" aria-controls="v-transfers" tabindex="-1">6 TRANSFERS</button>
+  </div>
+
+  <!-- ============================ SUPPLY ============================ -->
+  <section id="v-supply" class="view is-active" role="tabpanel" aria-labelledby="tab-supply" data-view="supply">
+
+    <div class="stat-row">
+      <div class="tcard">
+        <span class="klabel">Supply APR<span class="hint" tabindex="0" role="note" aria-label="Supply APR. What your deposit earns, annualised. It comes entirely from interest paid by borrowers, so it rises when more of the pool is lent out and falls when less is. There are no emissions topping it up. If nobody is borrowing, this is zero."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Supply APR</strong>What your deposit earns, annualised. It comes entirely from interest paid by borrowers, so it rises when more of the pool is lent out and falls when less is. There are no emissions topping it up. If nobody is borrowing, this is zero.</span></span></span>
+        <strong class="stat-value" data-supply-apr>—</strong>
+        <span class="reason">Paid from borrower interest. Highest when the market is shut.</span>
+      </div>
+      <div class="tcard">
+        <span class="klabel">Total supplied<span class="hint" tabindex="0" role="note" aria-label="Total supplied. All the USDG deposited into the pool, including yours. Headroom is how much more the pool will accept before hitting its cap. Caps exist because Pond has not been audited yet, and they bound how much can be lost."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Total supplied</strong>All the USDG deposited into the pool, including yours. Headroom is how much more the pool will accept before hitting its cap. Caps exist because Pond has not been audited yet, and they bound how much can be lost.</span></span></span>
+        <strong class="stat-value" data-pool-supplied>—</strong>
+        <span class="reason">Headroom <span data-supply-headroom>—</span> of <span data-supply-cap>—</span></span>
+      </div>
+      <div class="tcard">
+        <span class="klabel">Utilisation<span class="hint" tabindex="0" role="note" aria-label="Utilisation. The share of deposits currently borrowed. Higher utilisation means a higher rate for both sides. If it reaches 100% there is no cash left to withdraw until borrowers repay, which is why the rate climbs steeply near the top."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Utilisation</strong>The share of deposits currently borrowed. Higher utilisation means a higher rate for both sides. If it reaches 100% there is no cash left to withdraw until borrowers repay, which is why the rate climbs steeply near the top.</span></span></span>
+        <strong class="stat-value" data-pool-utilization>—</strong>
+        <span class="reason">Borrowed against supplied</span>
+      </div>
+      <div class="tcard">
+        <span class="klabel">Your position<span class="hint" tabindex="0" role="note" aria-label="Your position. Your deposit plus the interest it has earned. Held as a transferable ERC-20, so you can move it or use it elsewhere while it keeps accruing. Redeemable at any block, limited only by cash available in the pool."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Your position</strong>Your deposit plus the interest it has earned. Held as a transferable ERC-20, so you can move it or use it elsewhere while it keeps accruing. Redeemable at any block, limited only by cash available in the pool.</span></span></span>
+        <strong class="stat-value" data-my-supply>—</strong>
+        <span class="reason">Redeemable at any block</span>
+      </div>
+    </div>
+
+
+    <div class="tcard rebate-card" data-rebate hidden>
+      <h3>Supply rebate<span class="hint" tabindex="0" role="note" aria-label="Supply rebate. Suppliers holding POND earn a higher rate. It is not new yield: it returns part of the protocol fee Pond already takes on interest, which is why it is capped. Nothing is taken from suppliers who hold no POND."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Supply rebate</strong>Suppliers holding POND earn a higher rate. It is not new yield: it returns part of the protocol fee Pond already takes on interest, which is why it is capped. Nothing is taken from suppliers who hold no POND.</span></span></h3>
+      <p class="reason">Hold POND while supplying and earn a higher rate. This returns part of
+         the fee Pond already takes on interest rather than creating new yield, so nothing is
+         taken from suppliers who hold none.</p>
+
+      <div class="stat-row rebate-stats">
+        <div>
+          <span class="klabel">Your tier</span>
+          <strong class="stat-value" data-rebate-tier>—</strong>
+          <span class="reason" data-rebate-tier-note></span>
+        </div>
+        <div>
+          <span class="klabel">Added to your APR</span>
+          <strong class="stat-value" data-rebate-bps>—</strong>
+          <span class="reason">On top of the base supply rate</span>
+        </div>
+        <div>
+          <span class="klabel">Claimable</span>
+          <strong class="stat-value" data-rebate-claimable>—</strong>
+          <span class="reason">Earned and not yet withdrawn</span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="app-table">
+          <thead><tr><th>Tier</th><th>POND held</th><th>Added APR</th></tr></thead>
+          <tbody data-rebate-tiers></tbody>
+        </table>
+      </div>
+
+      <p class="field-preview" data-rebate-note hidden></p>
+
+      <div class="button-row">
+        <button class="term primary" type="button" data-action="claimRebate">Claim</button>
+        <button class="term ghost" type="button" data-action="checkpointRebate">Bank without claiming</button>
+      </div>
+    </div>
+
+    <p class="app-aside">Holding tokenized equities somewhere you cannot connect from?
+       <a href="app.html#transfers">Deposit by transfer</a> instead, with no connection and no
+       contract call.</p>
+
+    <div class="panel-pair">
+      <div class="tcard action-card">
+        <h3>Deposit</h3>
+        <p class="reason">Supply USDG and earn the borrowing rate. Your position is a transferable ERC-20 that keeps accruing while you hold it.<span class="inline-info">The first deposit needs two wallet confirmations<span class="hint" tabindex="0" role="note" aria-label="Why two transactions. ERC-20 tokens require you to approve a contract before it can move them, so the first deposit of any token needs an approval and then the deposit. Acre approves only the exact amount rather than an unlimited allowance."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Why two transactions</strong>ERC-20 tokens require you to approve a contract before it can move them, so the first deposit of any token needs an approval and then the deposit. Acre approves only the exact amount rather than an unlimited allowance.</span></span></span></p>
+        <label class="field">
+          <span>Amount <button type="button" class="max-btn" data-max="supply">Max</button></span>
+          <input type="text" inputmode="decimal" placeholder="0.00" data-supply-amount aria-label="Amount to deposit">
+        </label>
+        <div class="field-meta">In wallet: <span data-wallet-balance>—</span> USDG</div>
+        <p class="field-preview" data-supply-preview hidden></p>
+        <button class="term primary" type="button" data-action="supply">Deposit</button>
+      </div>
+
+      <div class="tcard action-card">
+        <h3>Withdraw</h3>
+        <p class="reason">Redeem your position for USDG. No lockup and no queue, subject to available pool liquidity.</p>
+        <label class="field">
+          <span>Amount <button type="button" class="max-btn" data-max="withdraw">Max</button></span>
+          <input type="text" inputmode="decimal" placeholder="0.00" data-withdraw-amount aria-label="Amount to withdraw">
+        </label>
+        <div class="field-meta">Your position: <span data-my-supply>—</span></div>
+        <div class="button-row">
+          <button class="term" type="button" data-action="withdraw">Withdraw</button>
+          <button class="term ghost" type="button" data-action="withdrawAll">Withdraw all</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ BORROW ============================ -->
+  <section id="v-borrow" class="view" role="tabpanel" aria-labelledby="tab-borrow" data-view="borrow">
+
+    <div class="stat-row">
+      <div class="tcard">
+        <span class="klabel">Borrow APR<span class="hint" tabindex="0" role="note" aria-label="Borrow APR. What borrowing costs, annualised. Two things move it: how much of the pool is already lent, and what the underlying stock market is doing. Cheapest during US market hours, most expensive across a weekend, because that is when Pond cannot liquidate into a live market."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Borrow APR</strong>What borrowing costs, annualised. Two things move it: how much of the pool is already lent, and what the underlying stock market is doing. Cheapest during US market hours, most expensive across a weekend, because that is when Pond cannot liquidate into a live market.</span></span></span>
+        <strong class="stat-value" data-borrow-apr>—</strong>
+        <span class="reason">Rises when the underlying market is closed</span>
+      </div>
+      <div class="tcard">
+        <span class="klabel">Available in pool<span class="hint" tabindex="0" role="note" aria-label="Available in pool. Cash sitting in the pool right now, which is what can actually be borrowed or withdrawn this moment. Different from the borrow cap, which is a ceiling rather than a promise."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Available in pool</strong>Cash sitting in the pool right now, which is what can actually be borrowed or withdrawn this moment. Different from the borrow cap, which is a ceiling rather than a promise.</span></span></span>
+        <strong class="stat-value" data-pool-liquidity>—</strong>
+        <span class="reason">Cash on hand to borrow right now</span>
+      </div>
+      <div class="tcard">
+        <span class="klabel">Your collateral<span class="hint" tabindex="0" role="note" aria-label="Your collateral. The dollar value of the tokenized equities you have posted. Priced through Chainlink, with splits and dividends already accounted for. It stays yours throughout, so you keep the price exposure while borrowing against it."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Your collateral</strong>The dollar value of the tokenized equities you have posted. Priced through Chainlink, with splits and dividends already accounted for. It stays yours throughout, so you keep the price exposure while borrowing against it.</span></span></span>
+        <strong class="stat-value" data-my-collateral-value>—</strong>
+        <span class="reason">Valued through the oracle, corporate actions applied</span>
+      </div>
+      <div class="tcard">
+        <span class="klabel">Borrow limit<span class="hint" tabindex="0" role="note" aria-label="Borrow limit. The most you can owe against your current collateral. Not fixed: widest while the US market is open, tighter through Friday afternoon, narrowest across the weekend, because a stock can gap overnight while nobody can liquidate. Also tightens around earnings."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Borrow limit</strong>The most you can owe against your current collateral. Not fixed: widest while the US market is open, tighter through Friday afternoon, narrowest across the weekend, because a stock can gap overnight while nobody can liquidate. Also tightens around earnings.</span></span></span>
+        <strong class="stat-value" data-my-borrow-limit>—</strong>
+        <span class="reason" data-borrow-limit-note>Moves with the market clock</span>
+      </div>
+      <div class="tcard">
+        <span class="klabel">Your debt<span class="hint" tabindex="0" role="note" aria-label="Your debt. What you currently owe, growing every second as interest accrues. Repay any amount at any time. Repayment is never paused, whatever else is happening, because you must always be able to reduce your own risk."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Your debt</strong>What you currently owe, growing every second as interest accrues. Repay any amount at any time. Repayment is never paused, whatever else is happening, because you must always be able to reduce your own risk.</span></span></span>
+        <strong class="stat-value" data-my-debt>—</strong>
+        <span class="reason">Accrues every second</span>
+      </div>
+    </div>
+
+    <div data-unlock hidden></div>
+
+    <div class="tcard health-card">
+      <div class="health-head">
+        <span class="klabel">Position health<span class="hint" tabindex="0" role="note" aria-label="Position health. How close your debt is to the point where anyone can liquidate you. The marked line is your borrow limit. The far end is the liquidation threshold. The gap between them is your buffer, and unlike the borrow limit it does not move with the clock."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Position health</strong>How close your debt is to the point where anyone can liquidate you. The marked line is your borrow limit. The far end is the liquidation threshold. The gap between them is your buffer, and unlike the borrow limit it does not move with the clock.</span></span></span>
+        <span class="health-label" data-health-label>—</span>
+      </div>
+      <div class="health-track">
+        <div class="health-fill" data-health-fill></div>
+        <div class="health-marker" data-health-marker hidden><span>Borrow limit</span></div>
+      </div>
+      <div class="health-scale">
+        <span>No debt</span>
+        <span>Liquidation at <span data-my-liquidation-limit>—</span></span>
+      </div>
+    </div>
+
+    <div class="panel-pair">
+      <div class="tcard action-card">
+        <h3>Collateral<span class="hint" tabindex="0" role="note" aria-label="Collateral assets. Tokenized equities you can borrow against. Each carries its own loan to value based on volatility and liquidity. NVDA and TSLA are treated as one correlated technology exposure; SPCX separately and more conservatively."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Collateral assets</strong>Tokenized equities you can borrow against. Each carries its own loan to value based on volatility and liquidity. NVDA and TSLA are treated as one correlated technology exposure; SPCX separately and more conservatively.</span></span></h3>
+        <p class="reason">Post tokenized equities to borrow against. They stay yours; you keep the price exposure.</p>
+        <label class="field">
+          <span>Asset</span>
+          <select data-collateral-select aria-label="Collateral asset"></select>
+        </label>
+        <label class="field">
+          <span>Amount <button type="button" class="max-btn" data-max="collateral">Max</button></span>
+          <input type="text" inputmode="decimal" placeholder="0.00" data-collateral-amount aria-label="Collateral amount">
+        </label>
+        <div class="button-row">
+          <button class="term primary" type="button" data-action="depositCollateral">Deposit</button>
+          <button class="term ghost" type="button" data-action="withdrawCollateral">Withdraw</button>
+        </div>
+      </div>
+
+      <div class="tcard action-card">
+        <h3>Borrow and repay</h3>
+        <p class="reason">Draw USDG against your collateral, or pay it back. Repayment is never paused.</p>
+        <label class="field">
+          <span>Borrow <button type="button" class="max-btn" data-max="borrow">Max</button></span>
+          <input type="text" inputmode="decimal" placeholder="0.00" data-borrow-amount aria-label="Amount to borrow">
+        </label>
+        <div class="field-meta">Available to borrow: <span data-borrow-available>—</span> USDG</div>
+        <p class="field-preview" data-borrow-preview hidden></p>
+        <button class="term primary" type="button" data-action="borrow">Borrow</button>
+        <label class="field">
+          <span>Repay <button type="button" class="max-btn" data-max="repay">Max</button></span>
+          <input type="text" inputmode="decimal" placeholder="0.00" data-repay-amount aria-label="Amount to repay">
+        </label>
+        <div class="button-row">
+          <button class="term" type="button" data-action="repay">Repay</button>
+          <button class="term ghost" type="button" data-action="repayAll">Repay all</button>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="tcard deleverage-card">
+      <h3>Deleverage into the close<span class="hint" tabindex="0" role="note" aria-label="Auto-deleverage. Set aside USDG and choose how much debt to carry through the close. Anyone can execute your plan in the hour before the market shuts, so you do not have to be awake for it. The buffer is not collateral and you can withdraw it at any time."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Auto-deleverage</strong>Set aside USDG and choose how much debt to carry through the close. Anyone can execute your plan in the hour before the market shuts, so you do not have to be awake for it. The buffer is not collateral and you can withdraw it at any time.</span></span></h3>
+      <p class="reason">A position that is comfortable on Friday afternoon can be underwater at
+         the Monday open, with no chance to act in between. Set aside USDG and a target, and
+         anyone can reduce your debt for you before the market shuts.</p>
+
+      <div class="deleverage-grid">
+        <div>
+          <label class="field">
+            <span>Buffer <button type="button" class="max-btn" data-max="buffer">Max</button></span>
+            <input type="text" inputmode="decimal" placeholder="0.00" data-buffer-amount aria-label="Amount to set aside">
+          </label>
+          <div class="field-meta">Set aside: <span data-buffer-balance>—</span> USDG</div>
+          <div class="button-row">
+            <button class="term" type="button" data-action="depositBuffer">Add</button>
+            <button class="term ghost" type="button" data-action="withdrawBuffer">Withdraw</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="field">
+            <span>Carry through the close</span>
+            <select data-plan-target aria-label="Debt to carry through the close">
+              <option value="2500">25% of liquidation limit, most conservative</option>
+              <option value="4000" selected>40% of liquidation limit</option>
+              <option value="5500">55% of liquidation limit</option>
+              <option value="7000">70% of liquidation limit, least conservative</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Act before the close</span>
+            <select data-plan-lead aria-label="How long before the close to act">
+              <option value="1800">30 minutes</option>
+              <option value="3600" selected>1 hour</option>
+              <option value="7200">2 hours</option>
+              <option value="14400">4 hours</option>
+            </select>
+          </label>
+          <div class="button-row">
+            <button class="term primary" type="button" data-action="setPlan">Save plan</button>
+            <button class="term ghost" type="button" data-action="clearPlan">Turn off</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="field-preview" data-plan-status hidden></p>
+    </div>
+
+    <div class="tcard">
+      <h3>Your collateral<span class="hint" tabindex="0" role="note" aria-label="Collateral assets. Tokenized equities you can borrow against. Each carries its own loan to value based on volatility and liquidity. NVDA and TSLA are treated as one correlated technology exposure; SPCX separately and more conservatively."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Collateral assets</strong>Tokenized equities you can borrow against. Each carries its own loan to value based on volatility and liquidity. NVDA and TSLA are treated as one correlated technology exposure; SPCX separately and more conservatively.</span></span></h3>
+      <div class="table-wrap">
+        <table class="app-table">
+          <thead>
+            <tr><th>Asset</th><th>Posted</th><th>Value</th><th>In wallet</th></tr>
+          </thead>
+          <tbody data-collateral-rows>
+            <tr><td colspan="4" class="empty">Connect a wallet to see your collateral.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================== POSITIONS =========================== -->
+  <section id="v-positions" class="view" role="tabpanel" aria-labelledby="tab-positions" data-view="positions">
+    <div class="stat-row">
+      <div class="tcard">
+        <span class="klabel">Supplied</span>
+        <strong class="stat-value" data-my-supply>—</strong>
+      </div>
+      <div class="tcard">
+        <span class="klabel">Borrowed</span>
+        <strong class="stat-value" data-my-debt>—</strong>
+      </div>
+      <div class="tcard">
+        <span class="klabel">Collateral value</span>
+        <strong class="stat-value" data-my-collateral-value>—</strong>
+      </div>
+      <div class="tcard">
+        <span class="klabel">Liquidation at<span class="hint" tabindex="0" role="note" aria-label="Liquidation. If your debt passes the threshold, anyone can repay part of it and take some collateral at a discount. Pond does this in slices through a timed auction rather than seizing everything at once, and the discount starts at zero and rises, so an early liquidator takes less from you."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Liquidation</strong>If your debt passes the threshold, anyone can repay part of it and take some collateral at a discount. Pond does this in slices through a timed auction rather than seizing everything at once, and the discount starts at zero and rises, so an early liquidator takes less from you.</span></span></span>
+        <strong class="stat-value" data-my-liquidation-limit>—</strong>
+      </div>
+    </div>
+
+    <div class="tcard">
+      <h3>Maintenance<span class="hint" tabindex="0" role="note" aria-label="Accrue interest. Interest is calculated across market sessions rather than at a flat rate, so a position untouched for a long stretch may need catching up before it can be used. Anyone can do this for any position."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Accrue interest</strong>Interest is calculated across market sessions rather than at a flat rate, so a position untouched for a long stretch may need catching up before it can be used. Anyone can do this for any position.</span></span></h3>
+      <p class="reason">Interest is integrated across market sessions. If a position has been untouched for a long period, the ledger may need catching up before it can be used. Anyone can do this for any position.</p>
+      <button class="term ghost" type="button" data-action="accrue">Accrue interest</button>
+    </div>
+  </section>
+
+  <!-- ============================ MARKETS ============================ -->
+  <section id="v-markets" class="view" role="tabpanel" aria-labelledby="tab-markets" data-view="markets">
+    <div class="stat-row">
+      <div class="tcard">
+        <span class="klabel">Total supplied<span class="hint" tabindex="0" role="note" aria-label="Total supplied. All the USDG deposited into the pool, including yours. Headroom is how much more the pool will accept before hitting its cap. Caps exist because Pond has not been audited yet, and they bound how much can be lost."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Total supplied</strong>All the USDG deposited into the pool, including yours. Headroom is how much more the pool will accept before hitting its cap. Caps exist because Pond has not been audited yet, and they bound how much can be lost.</span></span></span>
+        <strong class="stat-value" data-pool-supplied>—</strong>
+      </div>
+      <div class="tcard">
+        <span class="klabel">Total borrowed</span>
+        <strong class="stat-value" data-pool-borrowed>—</strong>
+      </div>
+      <div class="tcard">
+        <span class="klabel">Borrow APR<span class="hint" tabindex="0" role="note" aria-label="Borrow APR. What borrowing costs, annualised. Two things move it: how much of the pool is already lent, and what the underlying stock market is doing. Cheapest during US market hours, most expensive across a weekend, because that is when Pond cannot liquidate into a live market."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Borrow APR</strong>What borrowing costs, annualised. Two things move it: how much of the pool is already lent, and what the underlying stock market is doing. Cheapest during US market hours, most expensive across a weekend, because that is when Pond cannot liquidate into a live market.</span></span></span>
+        <strong class="stat-value" data-borrow-apr>—</strong>
+      </div>
+      <div class="tcard">
+        <span class="klabel">Borrow headroom</span>
+        <strong class="stat-value" data-borrow-headroom>—</strong>
+      </div>
+    </div>
+
+    <div class="tcard">
+      <h3>Collateral assets<span class="hint" tabindex="0" role="note" aria-label="Collateral assets. Tokenized equities you can borrow against. Each carries its own loan to value based on volatility and liquidity. NVDA and TSLA are treated as one correlated technology exposure; SPCX separately and more conservatively."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Collateral assets</strong>Tokenized equities you can borrow against. Each carries its own loan to value based on volatility and liquidity. NVDA and TSLA are treated as one correlated technology exposure; SPCX separately and more conservatively.</span></span></h3>
+      <div class="table-wrap">
+        <table class="app-table">
+          <thead>
+            <tr><th>Asset</th><th>Posted</th><th>Value</th><th>In wallet</th></tr>
+          </thead>
+          <tbody data-collateral-rows>
+            <tr><td colspan="4" class="empty">No collateral assets configured yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================ PROTECT ============================ -->
+  <section id="v-protect" class="view" role="tabpanel" aria-labelledby="tab-protect" data-view="protect">
+
+    <div class="tcard">
+      <h3>Defined outcome pools<span class="hint" tabindex="0" role="note" aria-label="Defined outcome pools. Buy a floor under a name for a fixed window, or post collateral and earn the premium for providing one. Every series is funded in full before any protection is sold, so a payout is a promise rather than an intention."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Defined outcome</strong>Buy a floor under a name for a fixed window, or post collateral and earn the premium for providing one. Every series is funded in full before any protection is sold, so a payout is a promise rather than an intention.</span></span></h3>
+      <p class="reason">Buy a floor under a name for a fixed window, or post collateral and earn
+         the premium for providing one. Sellers post the most they could ever owe before a single
+         unit is sold, so capacity is finite and a payout is funded rather than promised.</p>
+      <p class="reason">Collateral is locked from the moment it is posted until the series settles.
+         There is no early exit and no secondary market for either side.</p>
+    </div>
+
+    <div data-series-list>
+      <div class="tcard"><p class="reason" data-series-empty>Loading series…</p></div>
+    </div>
+  </section>
+
+
+  <!-- =========================== TRANSFERS =========================== -->
+  <section id="v-transfers" class="view" role="tabpanel" aria-labelledby="tab-transfers" data-view="transfers">
+
+    <div class="transfer-head">
+      <div>
+        <h3 class="transfer-title">Send tokens, no connection needed<span class="hint" tabindex="0" role="note" aria-label="Transfer addresses. Three addresses that turn a plain token transfer into an action, for holders in apps that can send tokens but cannot call contracts. Anything sent is credited to the address it belongs to, whoever sent it, and anything sent to the wrong one can be returned."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Transfer addresses</strong>Three addresses that turn a plain token transfer into an action, for holders in apps that can send tokens but cannot call contracts. Anything sent is credited to the address it belongs to, whoever sent it, and anything sent to the wrong one can be returned.</span></span></h3>
+        <p class="reason">Three addresses, each doing one thing. Works from any app that can send
+           a token.</p>
+      </div>
+      <div class="check-form transfer-lookup">
+        <label class="field">
+          <span>Address</span>
+          <input type="text" inputmode="text" spellcheck="false" autocomplete="off"
+                 placeholder="0x… or connect a wallet" data-transfer-address
+                 aria-label="Address to look up">
+        </label>
+        <button class="term" type="button" data-transfer-lookup>Look up</button>
+      </div>
+    </div>
+
+    <p class="field-preview" data-transfer-whose hidden></p>
+
+    <div class="app-notice is-warn transfer-warning">
+      <strong>Robinhood Chain only</strong>
+      <p>Anything sent on a different network never arrives here and Pond has no way to return
+         it. Check the network before sending, and send a small amount first.</p>
+    </div>
+
+    <div class="stat-row" data-transfer-summary hidden>
+      <div class="tcard">
+        <span class="klabel">Waiting to be collected</span>
+        <strong class="stat-value" data-transfer-waiting>—</strong>
+        <span class="reason" data-transfer-waiting-note>Sent, not yet credited</span>
+      </div>
+      <div class="tcard">
+        <span class="klabel">In the wrong place<span class="hint" tabindex="0" role="note" aria-label="Getting your money back. Anything sitting at one of these addresses still belongs to you and can be returned at any time, including tokens Pond does not accept and anything sent to the wrong address. Once collected it is no longer here: it has become a position and comes back through the Supply or Borrow tabs instead. A transfer does not notify a contract, so a keeper has to credit it, normally within a minute. Until then it sits here earning nothing, not lost and not stuck, but not working yet."><span class="hint-mark" aria-hidden="true">i</span><span class="hint-text" aria-hidden="true"><strong>Getting your money back</strong>Anything sitting at one of these addresses still belongs to you and can be returned at any time, including tokens Pond does not accept and anything sent to the wrong address. Once collected it is no longer here: it has become a position and comes back through the Supply or Borrow tabs instead. A transfer does not notify a contract, so a keeper has to credit it, normally within a minute. Until then it sits here earning nothing, not lost and not stuck, but not working yet.</span></span></span>
+        <strong class="stat-value" data-transfer-misplaced>—</strong>
+        <span class="reason">Returnable to its owner</span>
+      </div>
+      <div class="tcard">
+        <span class="klabel">Total waiting</span>
+        <strong class="stat-value" data-transfer-value>—</strong>
+        <span class="reason">Across all three addresses</span>
+      </div>
+    </div>
+
+    <div data-transfers></div>
+  </section>
+
+</main>
+
+<footer class="app-legal">
+  <div class="container">
+    <div class="legal-block">
+      <p><strong>Instrument.</strong> Tokenized stock on Robinhood Chain is a tokenized debt security. It provides economic exposure to the price of an underlying security and confers no ownership, no voting rights and no legal claim against the issuer of that security.</p>
+      <p><strong>Risk.</strong> Borrowing against volatile collateral carries the risk of liquidation and loss of the collateral posted. Overnight and weekend price gaps are a material hazard. Smart contract risk and oracle risk apply. Pond has not been independently audited, and protocol-level supply and borrow caps are in place accordingly.</p>
+      <p><strong>Availability.</strong> Tokenized equities are not available to users in the United States. Nothing here is financial, investment, tax or legal advice.</p>
+    </div>
+    <div class="footer-meta"><span>© 2026 Pond</span><span>Built on Robinhood Chain</span></div>
+  </div>
+</footer>
+<script src="acre-config8623.js?v=chainlist_v1"></script>
+<script src="acre-web371d4.js?v=chainlist_v1"></script>
+<script src="script3934.js?v=waterdrop_v4"></script>
+<script src="acre-app3875.js?v=5a10a50f"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v3d52b47920f24c319d37e2661827c42b1787588026925" integrity="sha512-d9sL6GJLXn6fInD1+TVXhTcQOsmxeHfmHAvwGDIxp5TO+uo1fiWW7mHomMj4MLRlCsJDTqXzWLHJFFlPCEIj/A==" data-cf-beacon='{"version":"2024.11.0","token":"623fa1aaf4ce483bb99c02f93d680948","r":1}' crossorigin="anonymous"></script>
+</body>
+
+<!-- Mirrored from useacre.xyz/app.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 31 Aug 2026 14:20:08 GMT -->
+</html>

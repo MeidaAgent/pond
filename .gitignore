@@ -1,0 +1,9 @@
+node_modules
+server/node_modules
+server/dist
+.env
+.env.local
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+.vercel

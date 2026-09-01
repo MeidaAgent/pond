@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+
+<!-- Mirrored from useacre.xyz/docs.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 31 Aug 2026 14:20:05 GMT -->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Pond protocol documentation: supplying USDG, borrowing against tokenized equities, hours-aware collateral terms and auction liquidation.">
+  <title>Pond Docs</title>
+  <link rel="icon" href="assets/acre-mark-128.png">
+<link rel="stylesheet" href="styles614e.css?v=frosteddocs_v13">
+</head>
+<body class="acre-docs">
+<div class="docs-nav-shell">
+  <nav class="floating-nav container" aria-label="Primary navigation">
+    <a class="brand" href="index.html"><img src="assets/acre-mark-128.png" alt="Pond logo"><span>Pond</span></a>
+    <button class="menu" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="marketing-nav-links"><span></span><span></span></button>
+    <div class="nav-links" id="marketing-nav-links">
+      <a href="index.html#thesis">Thesis</a><a href="index.html#system">System</a><a href="index.html#risk">Risk</a><a href="vision.html">Vision</a><a href="docs.html" aria-current="page">Docs</a>
+      <a class="mobile-x-link" href="https://x.com/usePond" target="_blank" rel="noopener noreferrer" aria-label="Pond on X"><img src="assets/x.svg" alt="">X</a>
+    </div>
+    <div class="nav-tools"><a class="nav-x" href="https://x.com/usePond" target="_blank" rel="noopener noreferrer" aria-label="Pond on X"><img src="assets/x.svg" alt=""></a><a class="nav-launch" href="app.html">Launch app <span>↗</span></a></div>
+  </nav>
+</div>
+<main class="docs-main">
+
+  <aside class="docs-toc" aria-label="On this page">
+    <div class="docs-toc-inner">
+      <strong>On this page</strong>
+      <a href="#overview">Overview</a>
+      <a href="#problem">Why terms move</a>
+      <a href="#supplying">Supplying</a>
+      <a href="#borrowing">Borrowing</a>
+      <a href="#calendar">The market calendar</a>
+      <a href="#valuation">Collateral valuation</a>
+      <a href="#liquidation">Liquidation</a>
+      <a href="#interest">Interest and rates</a>
+      <a href="#governance">Governance</a>
+      <a href="#caps">Launch caps</a>
+      <a href="#risks">Risks</a>
+      <a href="#transfer">Deposit by transfer</a>
+      <a href="#rebate">Supply rebate</a>
+      <a href="#listing">Listing</a>
+      <a href="#outcome">Defined outcome</a>
+      <a href="#contracts">Contracts</a>
+      <a href="#glossary">Glossary</a>
+    </div>
+  </aside>
+
+  <div class="docs-body">
+
+    <section class="docs-section" id="overview">
+      <div class="eyebrow">Documentation</div>
+      <h1>Pond protocol</h1>
+      <p class="lede">A lending market for tokenized real-world assets on Robinhood Chain. Suppliers deposit USDG and earn the borrowing rate. Borrowers post tokenized equities as collateral and draw USDG against them without selling the position.</p>
+
+      <div class="docs-callout">
+        <strong>Status</strong>
+        <p>Deployed to Robinhood Chain mainnet on 29 August 2026, superseding an earlier deployment from the day before which remains live and withdrawable. Addresses are listed under Contracts below.</p>
+        <p>Pond has not been independently audited. It launches with caps that bound total exposure accordingly: 50,000 USDG of supply, 30,000 of borrowing, and 10,000 per account. Per-asset exposure caps limit how much of any single collateral the protocol will hold.</p>
+      </div>
+
+      <h2>What the protocol does</h2>
+      <p>Pond operates a single lending pool. One asset is lent, USDG, and many assets can be posted as collateral: tokenized equities and exchange traded funds issued on Robinhood Chain.</p>
+      <p>The pool is cross margined. A borrower's collateral is assessed as a portfolio rather than position by position, and a single debt balance is drawn against the whole of it. Collateral is held separately from the lending pool and is never lent out, so one borrower's position can never be diluted by another's.</p>
+      <p>The protocol is open at every block. What changes through the week is how much it will lend against a given asset, and what that borrowing costs.</p>
+    </section>
+
+    <section class="docs-section" id="problem">
+      <h2>Why terms move</h2>
+      <p>A tokenized equity trades continuously. The security it tracks does not. The New York Stock Exchange closes at 16:00 Eastern and reopens the following morning, and across a weekend that gap stretches past sixty hours.</p>
+      <p>Every lending protocol in decentralised finance assumes continuous price discovery and continuous liquidation depth. That assumption holds for a governance token and fails for a tokenized share of Nvidia. A borrower can be comfortably collateralised at the Friday close and deeply underwater at the Monday open, with no opportunity to liquidate at a fair price in between.</p>
+      <p>A protocol that ignores this has two options, both bad. Set collateral requirements loosely and accumulate bad debt on the first serious gap. Or set them tightly enough to survive a weekend, and be uncompetitive during the ninety percent of the week when that risk is not present.</p>
+      <p>Pond takes a third option: treat time as an input. Borrowing capacity is widest while the underlying market is open and liquidation can execute into real depth, and tightens as the distance to the next session grows.</p>
+
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <caption>Capacity multiplier applied to base loan to value</caption>
+          <thead><tr><th>Market state</th><th>Multiplier</th><th>Reasoning</th></tr></thead>
+          <tbody>
+            <tr><td>Regular session</td><td>100%</td><td>Live exchange pricing, real liquidation depth</td></tr>
+            <tr><td>Opens within 6 hours</td><td>95%</td><td>Short gap, limited scope for a large move</td></tr>
+            <tr><td>Opens within 24 hours</td><td>90%</td><td>Ordinary overnight closure</td></tr>
+            <tr><td>Opens within 48 hours</td><td>85%</td><td>Long weekend or holiday approaching</td></tr>
+            <tr><td>Opens beyond 48 hours</td><td>75%</td><td>Full weekend gap risk</td></tr>
+            <tr><td>Calendar unresolved</td><td>70%</td><td>Most conservative; the protocol never guesses</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>These multipliers are enforced as monotonic in the contract. Governance cannot configure a state in which capacity widens as the market moves further from an open.</p>
+    </section>
+
+    <section class="docs-section" id="supplying">
+      <h2>Supplying</h2>
+      <p>Suppliers deposit USDG and receive a position token representing their share of the pool. That position accrues interest continuously from borrower payments.</p>
+
+      <h3>The position is an ordinary ERC-20</h3>
+      <p>It can be held, transferred, or used elsewhere on the network while it continues to earn. A supplier who wants to exit before redeeming can sell the position directly rather than waiting on pool liquidity.</p>
+
+      <h3>Redemption</h3>
+      <p>Redeemable at any block, with no lockup, no vesting and no withdrawal queue under normal utilisation. If borrowing has consumed most of the pool, withdrawal is limited by available cash until borrowers repay or new supply arrives. This is the standard constraint of any lending market and is not specific to Acre.</p>
+
+      <h3>Where the yield comes from</h3>
+      <p>Suppliers earn the interest borrowers pay. There is no other source. Pond operates at a small protocol reserve factor, currently five percent, so the substantial majority of interest reaches the suppliers who funded it.</p>
+      <p>Because the borrowing rate rises when the underlying market is closed, supplier yield is highest across nights and weekends. That is the period when carrying leveraged exposure is genuinely riskiest, and pricing it accordingly is what pays the supply side.</p>
+
+      <div class="docs-callout">
+        <strong>No emissions</strong>
+        <p>Supplier yield is not subsidised. There is no points programme and no emissions inflating the rate, so every figure a supplier sees is interest actually paid by a borrower.</p>
+      </div>
+    </section>
+
+    <section class="docs-section" id="borrowing">
+      <h2>Borrowing</h2>
+      <p>Borrowers post tokenized equities or exchange traded funds as collateral and draw USDG against them. The position remains theirs throughout, so exposure to the underlying asset is retained while liquidity is released.</p>
+
+      <h3>Three inputs set borrowing capacity</h3>
+
+      <h4>The trading calendar</h4>
+      <p>Capacity follows the table above. It is at its widest during a regular session and tightest across a weekend, and returns to full capacity when the next session begins.</p>
+
+      <h4>The earnings schedule</h4>
+      <p>Individual equities move hardest around earnings announcements, and those dates are published well in advance. Capacity against a given name tightens automatically across a window surrounding its report, currently two days either side at a multiplier of seventy percent. The schedule is published, so borrowers can plan around it rather than discovering it during a liquidation.</p>
+
+      <h4>Portfolio composition</h4>
+      <p>A borrower holding several large capitalisation technology names holds one correlated exposure, not several independent ones. Acre groups collateral into correlation groups and measures concentration across them, so a genuinely diversified basket receives better terms than the same assets assessed individually.</p>
+      <p>The uplift is capped, currently at ten percent, and a portfolio wholly inside one group receives none of it. This is the same property Uniswap exploits with its correlated pools on the network, applied to credit rather than liquidity provision.</p>
+
+      <h3>What is not time varying</h3>
+      <p>The liquidation threshold does not follow the clock. Only new borrowing is restricted by time.</p>
+      <p>This is deliberate and it is the most important safety decision in the risk engine. If the threshold tightened at the Friday close, thousands of solvent positions would become liquidatable at the same instant, into the thinnest depth of the week. An existing position is judged against a static threshold; the clock only affects how much new debt can be drawn.</p>
+    </section>
+
+    <section class="docs-section" id="calendar">
+      <h2>The market calendar</h2>
+      <p>The calendar is an on-chain model of the United States equity trading calendar. Everything else in the protocol reads from it.</p>
+
+      <h3>What it resolves</h3>
+      <p>Regular sessions, extended hours, weekends, market holidays, half days and daylight saving. Eastern Time is UTC minus four or five hours depending on the date, and the transition rules have been in force since 2007: clocks advance on the second Sunday of March and retreat on the first Sunday of November. Getting this wrong shifts every session boundary by an hour for roughly eight months of the year.</p>
+
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <caption>Session states</caption>
+          <thead><tr><th>State</th><th>Eastern Time</th></tr></thead>
+          <tbody>
+            <tr><td>Regular</td><td>09:30 to 16:00 on a trading day, or 13:00 on a half day</td></tr>
+            <tr><td>Extended</td><td>04:00 to 09:30 and the close to 20:00, or 17:00 on a half day</td></tr>
+            <tr><td>Closed, overnight</td><td>Outside those hours where the next open is within a day</td></tr>
+            <tr><td>Closed, weekend</td><td>Where the next open is more than a day away</td></tr>
+            <tr><td>Closed, holiday</td><td>A registered market holiday</td></tr>
+            <tr><td>Unknown</td><td>Beyond the provisioned horizon</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Why it fails closed</h3>
+      <p>Weekdays and daylight saving can be computed from a timestamp. Market holidays cannot, because they include Good Friday and occasional unscheduled closures. Holidays are therefore supplied by an operator up to a stated horizon.</p>
+      <p>Any query beyond that horizon returns <span class="mono-inline">Unknown</span>, which is the zero value of the enum and which every consumer treats as the most restrictive state. An uninitialised or neglected calendar reports the tightest possible terms rather than an accidentally permissive one. Forgetting to extend the calendar degrades the protocol into conservatism; it never exposes it to an unmodelled closure.</p>
+      <p>The horizon can only move forward. Allowing an operator to move it backwards would retroactively invalidate calendar data that live positions were priced against.</p>
+    </section>
+
+    <section class="docs-section" id="valuation">
+      <h2>Collateral valuation</h2>
+      <p>Collateral is priced from Chainlink feeds covering the underlying equities. Every failure mode reverts: a stale answer beyond the configured heartbeat, a non positive price, an incomplete round, or an unconfigured asset. There is no fallback price and no last known good value, because a borrow or a liquidation priced from a stale feed is worse than one that does not execute.</p>
+
+      <h3>Corporate actions</h3>
+      <p>Tokenized stock on Robinhood Chain implements ERC-8056, the scaled amount extension. When a corporate action occurs, a multiplier scales the effective amount held while raw balances and total supply remain unchanged.</p>
+      <p>Chainlink's feed for these tokens already reports the token price as the underlying equity price multiplied by that value. Acre therefore does not apply the multiplier itself. Doing so would double count it, an error that is invisible while the multiplier sits at exactly one and becomes a large mispricing the moment a dividend or split moves it.</p>
+      <p>What Pond does instead is treat the multiplier as a consistency check. It is read on every valuation and bounded on both sides, so a token whose convention has changed halts pricing rather than being trusted silently.</p>
+
+      <h3>Corporate action pauses</h3>
+      <p>The tokenized equity standard describes a pause flag an issuer can set while a corporate action is processed. Acre can read it and halt every valuation of an affected asset while it is set.</p>
+      <p>None of the Robinhood tokens currently implement that function, so the check is disabled at present. Acre refuses to enable it for an asset that cannot answer it, rather than accepting the setting and reverting on every valuation afterwards. If the issuer adds it, the check can be turned on per asset without redeploying.</p>
+      <p>Staleness bounds remain the protection that is actually active. A feed that stops updating beyond its heartbeat halts valuation regardless of any pause flag.</p>
+
+      <h3>Sequencer availability</h3>
+      <p>Robinhood Chain is an optimistic rollup. A price read while its sequencer is down is a price read against a chain nobody can submit a transaction to: borrowers cannot post collateral and liquidators cannot act. Acre checks Chainlink's sequencer uptime feed before every valuation, and applies a grace period after an outage so that borrowers have time to react before liquidation resumes.</p>
+    </section>
+
+    <section class="docs-section" id="liquidation">
+      <h2>Liquidation</h2>
+      <p>A position becomes liquidatable when its debt exceeds its liquidation limit, which is the sum of each collateral holding valued at that asset's liquidation threshold.</p>
+
+      <h3>Why it is auctioned rather than instant</h3>
+      <p>Close to all secondary liquidity for tokenized equities on the network sits on a single venue, and it is thinnest at exactly the hours liquidations are most likely to trigger. A design that seizes an entire position and dumps it produces a worse price for everyone, including the other borrowers still solvent at the time.</p>
+
+      <h3>How it works</h3>
+      <ol class="docs-list">
+        <li><strong>An auction is opened.</strong> Anyone may open one against an unhealthy account.</li>
+        <li><strong>A grace period runs.</strong> Currently fifteen minutes, during which no collateral can be seized. This gives the borrower an opportunity to repay and gives liquidators time to arrange a hedge rather than selling spot immediately.</li>
+        <li><strong>The discount ramps.</strong> From zero to its maximum over a configurable window, currently two hours. Liquidators compete on time rather than demanding a wide discount up front.</li>
+        <li><strong>Seizure is partial.</strong> A close factor caps how much of the debt any single call may repay, currently fifty percent.</li>
+        <li><strong>A per block cap applies.</strong> Set per asset, limiting how much collateral can reach the market in any one block.</li>
+      </ol>
+
+      <p>The result is a lower liquidation discount than a conventional design requires. That discount is a cost borne by the borrower, so reducing it improves terms across the whole market.</p>
+
+      <h3>Recovery</h3>
+      <p>If a position becomes healthy again, the auction closes automatically when the borrower repays or deposits collateral. A ripened auction cannot survive a recovery and be used against the borrower later.</p>
+
+      <h3>Bad debt</h3>
+      <p>If collateral is exhausted and debt remains, the loss is recognised on the supply ledger and borne by suppliers in proportion to their shares. This is the honest treatment. The alternative is a phantom asset that overstates every supplier's redemption value until the pool runs dry and the last participant absorbs the whole loss.</p>
+    </section>
+
+    <section class="docs-section" id="interest">
+      <h2>Interest and rates</h2>
+      <p>The borrowing rate has two components: a utilisation curve and a session multiplier.</p>
+
+      <h3>Utilisation</h3>
+      <p>A standard two slope curve. The rate rises gently up to an optimal utilisation point, currently eighty five percent, and steeply above it. That steepness is what makes withdrawal possible: it prices borrowing high enough to attract new supply and encourage repayment when the pool is nearly fully lent.</p>
+
+      <h3>Session multiplier</h3>
+      <p>The rate is multiplied according to the same market clock that governs capacity. Borrowing is cheapest during a regular session and most expensive across a weekend, currently double the open market rate.</p>
+      <p>This is not a fee. It is the correct price for carrying leveraged exposure through a window in which the protocol cannot liquidate into live depth.</p>
+
+      <h3>Accrual</h3>
+      <p>Interest is integrated across session boundaries rather than sampled once. Sampling would be a hole in the mechanism: a borrower could avoid touching their position from the Friday close to the Monday open and pay the weekday rate for the entire weekend. Instead the elapsed interval is split at each point where the rate multiplier changes, and each segment accrues at its own rate. A weekend produces five segments.</p>
+      <p>Every state changing action requires the interest ledger to be current first, so nobody can act against an understated debt figure.</p>
+    </section>
+
+    <section class="docs-section" id="governance">
+      <h2>Governance</h2>
+      <p>Every parameter that matters sits behind a timelock. Governance actions are queued, publicly visible for the delay period, and only then executable.</p>
+      <p>This is what makes the protocol's parameters credible rather than merely promised. Anyone watching can see a change coming and exit before it takes effect.</p>
+
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <caption>Roles</caption>
+          <thead><tr><th>Role</th><th>Can do</th><th>Cannot do</th></tr></thead>
+          <tbody>
+            <tr><td>Governance (timelock)</td><td>Change any parameter, after the delay</td><td>Act immediately</td></tr>
+            <tr><td>Guardian</td><td>Cancel a queued action</td><td>Queue or execute anything</td></tr>
+            <tr><td>Operator</td><td>Extend the calendar, set earnings dates, tighten caps, pause new supply or borrowing</td><td>Loosen any limit, change risk parameters</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>The guardian's asymmetry is deliberate. A compromised guardian can stall the protocol but can never take anything from it.</p>
+
+      <h3>What is never pausable</h3>
+      <p>Repayment, collateral withdrawal and liquidation. A borrower must always be able to reduce risk, and the protocol must always be able to close a bad position, regardless of any pause or parameter state.</p>
+    </section>
+
+    <section class="docs-section" id="caps">
+      <h2>Launch caps</h2>
+      <p>The protocol launches with hard caps on total supply, total borrowing, and per account exposure. Those caps define the maximum that can be lost to a contract bug.</p>
+      <p>Raising a cap is a governance action and passes through the timelock, visible before it lands. Lowering one is available to the operator immediately, because reducing exposure during an incident cannot wait. The operator can never loosen a cap and can never remove one.</p>
+      <p>Caps never restrict exit. Withdrawal, repayment and collateral withdrawal are unaffected by them under any configuration.</p>
+    </section>
+
+    <section class="docs-section" id="risks">
+      <h2>Risks</h2>
+
+      <h3>The protocol has not been audited</h3>
+      <p>The test suite is extensive and the design fails conservative throughout, but no external party has reviewed this code. Launch caps exist because of this, and they should be read as a statement about how much confidence is warranted.</p>
+
+      <h3>Weekend and overnight gaps</h3>
+      <p>Collateral can reprice sharply while the protocol has no ability to liquidate. Conservative closed window terms reduce this exposure without eliminating it.</p>
+
+      <h3>Liquidity concentration</h3>
+      <p>Almost all secondary liquidity for these assets sits on one venue. Auctioned partial liquidation mitigates thin depth but does not remove the dependency.</p>
+
+      <h3>Oracle</h3>
+      <p>One Chainlink feed per asset, with no second source to cross check against. Staleness, non positive answers and incomplete rounds all revert, and the corporate action multiplier is bounded, but a feed reporting a wrong yet fresh and positive price would be believed.</p>
+
+      <h3>Issuer credit</h3>
+      <p>Tokenized stock on Robinhood Chain is a tokenized debt security. Holders carry the credit risk of the token issuer in addition to the price risk of the underlying asset, and hold no ownership, voting rights or legal claim against the company whose share price the token tracks.</p>
+
+      <h3>Availability</h3>
+      <p>Tokenized equities are not available to users in the United States, and Pond restricts access accordingly.</p>
+    </section>
+
+    <section class="docs-section" id="transfer">
+      <h2>Deposit by transfer</h2>
+      <p>Most tokenized equities are held in apps where somebody can send a token but cannot call a contract. Every lending market, including this one, requires an approve followed by a deposit, which excludes those holders by construction.</p>
+      <p>Pond gives each account three addresses. Sending a token to one of them performs an action, with no connection and no contract call.</p>
+
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <caption>What each address does</caption>
+          <thead><tr><th>Send</th><th>To</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>USDG or an accepted equity</td><td>Deposit address</td><td>Supply position, or collateral</td></tr>
+            <tr><td>Your supply position tokens</td><td>Withdraw address</td><td>The underlying returns to you</td></tr>
+            <tr><td>USDG</td><td>Repay address</td><td>Debt reduced, surplus returned</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Why the addresses are per account</h3>
+      <p>An ERC-20 transfer does not notify the receiving contract. A single shared address would see that tokens arrived and have no way to know who sent them, and crediting the wrong person is unrecoverable. So the address itself carries the identity, derived from the account it belongs to. Exchanges work the same way for the same reason.</p>
+      <p>A consequence worth knowing: it does not matter who sends. A withdrawal from a custodial app arrives as that app's address and still credits the person whose deposit address it is.</p>
+
+      <h3>Why there is no borrow address</h3>
+      <p>Deliberate, and it follows from the same property. Because these addresses cannot tell who sent to them, anyone could send a trivial amount to somebody's borrow address and put them into debt they never asked for. Griefing would cost the attacker a few cents and the victim a liquidation.</p>
+      <p>Withdrawal avoids this because the supply position is itself a transferable token: only somebody holding it can send it, so the tokens are the authorisation. Repayment avoids it because reducing a debt can only help the account, whoever triggers it. Borrowing has no equivalent, so it requires a wallet that can sign.</p>
+
+      <h3>When a transfer becomes a position</h3>
+      <p>Not immediately. A transfer is credited when somebody calls the contract to collect it, which a keeper does automatically. Until then it sits in the address, visible on chain, and its owner can retrieve it at any time.</p>
+      <p>It is not lost, but it is not a position either, and it earns nothing in between. Collection normally happens within a minute.</p>
+
+      <h3>What cannot be recovered</h3>
+      <p>Anything sent from a different network. These addresses exist on Robinhood Chain, and funds sent on another chain never arrive here, so Acre has no way to return them. Check the network before sending, and send a small amount first.</p>
+      <p>Anything sent to one of these addresses on Robinhood Chain can be returned, including tokens Acre does not accept and deposits sent to the wrong one of the three.</p>
+    </section>
+
+    <section class="docs-section" id="rebate">
+      <h2>Supply rebate</h2>
+      <p>Suppliers holding POND earn a higher rate. It is worth being precise about where that comes from, because the answer determines whether the arrangement is sustainable.</p>
+
+      <h3>It is not new yield</h3>
+      <p>Supplier interest is paid by borrowers, and there is no spare pool of it. A higher rate for one supplier has to come from somewhere, and there are only three places: from other suppliers, from newly issued tokens, or from the protocol's own fee.</p>
+      <p>Taking it from other suppliers would mean anyone not holding POND earns less than the published rate, which is a tax rather than a reward. Issuing tokens to cover it is an emission, and Acre does not have one. So the rebate comes from the third place: Acre keeps a reserve factor of five percent on interest, and this returns part of it.</p>
+      <p><strong>The consequence is that the boost can never exceed the reserve factor.</strong> The contract enforces a ceiling accordingly. A rate promising more than the reserve collects would drain the contract and then pay nobody, so it cannot be set.</p>
+
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <caption>Tiers</caption>
+          <thead><tr><th>Tier</th><th>POND held</th><th>Added to supply APR</th></tr></thead>
+          <tbody>
+            <tr><td>Bronze</td><td>1,000</td><td>+0.50%</td></tr>
+            <tr><td>Silver</td><td>10,000</td><td>+1.25%</td></tr>
+            <tr><td>Gold</td><td>50,000</td><td>+2.50%</td></tr>
+            <tr><td>Platinum</td><td>250,000</td><td>+5.00%</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>It rewards holding, not timing</h3>
+      <p>The rebate accrues on the lower of what an account held at the start of a period and what it holds at the end, for both the ACRE balance and the supplied amount. Someone who buys ACRE the moment before claiming is paid as though they held nothing, because for the period in question they did.</p>
+      <p>The same rule cuts the other way and it is only fair to say so: selling POND before claiming forfeits the rebate for that period, even if it was held for most of it. Checkpointing more often narrows the window, and anyone can checkpoint any account.</p>
+
+      <h3>What it does not change</h3>
+      <p>The base supply rate is unaffected. A supplier holding no POND earns exactly what they would have earned otherwise, and nothing is taken from them to fund anyone else's rebate. Borrowing terms, liquidation thresholds and collateral capacity are untouched: holding ACRE does not buy safer terms, only a share of the protocol's fee.</p>
+    </section>
+
+    <section class="docs-section" id="listing">
+      <h2>How assets get listed</h2>
+      <p>Every collateral asset is listed against a published risk tier rather than parameterised by hand. Governance defines the tiers; listing an asset is then a single decision about which tier it belongs in, and that decision is recorded on chain for anyone who wants to argue with it.</p>
+      <p>The alternative, choosing four numbers per asset in private, works for three assets and stops working somewhere before thirty. It also makes every listing a fresh argument with no rule to appeal to.</p>
+
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <caption>Risk tiers</caption>
+          <thead><tr><th>Tier</th><th>Loan to value</th><th>Liquidation at</th><th>Max discount</th><th>Exposure cap</th></tr></thead>
+          <tbody>
+            <tr><td>Broad index</td><td>75%</td><td>85%</td><td>5%</td><td>$5,000,000</td></tr>
+            <tr><td>Mega cap</td><td>65%</td><td>78%</td><td>7%</td><td>$2,000,000</td></tr>
+            <tr><td>Volatile</td><td>55%</td><td>70%</td><td>8%</td><td>$500,000</td></tr>
+            <tr><td>Thin or private</td><td>40%</td><td>60%</td><td>10%</td><td>$100,000</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Loan to value figures are the starting point before the market calendar adjusts them. Everything above tightens as the underlying market approaches its close.</p>
+
+      <h3>Exposure caps</h3>
+      <p>The last column is the one that matters most at scale. It is the largest dollar value of a single asset the protocol will hold as collateral, across every account combined.</p>
+      <p>Without it, every listing shares one global limit, and a single thin name could end up backing the entire borrow book. The protocol would inherit the liquidity of its worst asset, and a gap in that one name would be a gap in everything. Capping each asset separately means a bad listing is a bounded mistake rather than a systemic one.</p>
+      <p>Caps are per tier, so raising one lifts every asset listed under it at once, and lowering one tightens them all. That is deliberate: it keeps the rule and the exception in the same place.</p>
+
+      <h3>Current listings</h3>
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <caption>Assets and their tiers</caption>
+          <thead><tr><th>Asset</th><th>Tier</th><th>Correlation group</th></tr></thead>
+          <tbody>
+            <tr><td>AAPL</td><td>Mega cap</td><td>Large technology</td></tr>
+            <tr><td>MSFT</td><td>Mega cap</td><td>Large technology</td></tr>
+            <tr><td>GOOGL</td><td>Mega cap</td><td>Large technology</td></tr>
+            <tr><td>AMZN</td><td>Mega cap</td><td>Large technology</td></tr>
+            <tr><td>META</td><td>Mega cap</td><td>Large technology</td></tr>
+            <tr><td>NVDA</td><td>Volatile</td><td>Large technology</td></tr>
+            <tr><td>TSLA</td><td>Volatile</td><td>Own group</td></tr>
+            <tr><td>SPCX</td><td>Thin or private</td><td>Own group</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Six of the eight share one correlation group. That is deliberate and it is the most important line in the table: someone holding Apple, Microsoft, Alphabet, Amazon, Meta and NVIDIA has one exposure to large technology, not six separate ones, and Acre scores it that way when calculating capacity.</p>
+      <p>NVIDIA sits in the volatile tier rather than mega cap because it moves considerably more than the others, but it stays in the technology group because it moves <em>with</em> them. Tesla is technology adjacent and trades on things the rest do not, so it has its own group.</p>
+
+      <h3>Correlation groups</h3>
+      <p>Assets sharing a group are treated as one exposure when calculating borrowing capacity. Two mega-cap technology names in the same group is not diversification, and scoring it as though it were is how a portfolio that looks balanced turns out not to be.</p>
+    </section>
+
+    <section class="docs-section" id="outcome">
+      <h2>Defined outcome pools</h2>
+      <p>One party buys a floor under a name for a fixed window. Another party earns a premium for providing it. At expiry the floor either paid or it did not, and both sides are settled from a pot that was funded in full before any protection was sold.</p>
+
+      <h3>Fully collateralised</h3>
+      <p>Sellers post the most they could ever owe before a single unit is sold. There is no margin, no liquidation, and no way to be short more than was funded. This is what lets the contract promise a payout rather than merely intend one, and it is why capacity is finite: a series can only sell as much protection as its collateral covers if the asset went to zero.</p>
+
+      <h3>How the premium is set</h3>
+      <p>Not by a model. Option pricing on chain is neither practical nor honest, because the inputs it needs are not observable here. The premium is a governance-set base rate for the asset, scaled by how much of the available protection has already been sold, and scaled again by how much of the window falls while the underlying market is shut.</p>
+      <p>That third term is the point. The risk being sold sits almost entirely in the hours when nobody can trade out of a position, so that is what the price should follow.</p>
+
+      <h3>What happens if settlement fails</h3>
+      <p>A series expires and is settled against the oracle. If the oracle is unavailable for the whole three day settlement window, the series voids: buyers get their premium back and sellers get their collateral back. Nobody is paid from a price nobody can verify.</p>
+      <p>The alternative would be to settle later at whatever the oracle eventually reports, which would let the outcome drift arbitrarily far from the window that was actually sold. Refunding is the safe failure, and it is chosen deliberately.</p>
+
+      <h3>Limitations worth knowing</h3>
+      <p>Collateral is locked from the moment it is posted until the series settles. There is no early exit for a seller who changes their mind, and no secondary market for either side of a position.</p>
+      <p>The closed-market term in the premium counts weekend days rather than walking the calendar hour by hour. It is an approximation, chosen because the extra precision would cost more gas than it is worth against a premium that is already an estimate.</p>
+    </section>
+
+    <section class="docs-section" id="contracts">
+      <h2>Contract addresses</h2>
+      <p>Deployed to Robinhood Chain mainnet, chain ID 4663, on 29 August 2026.</p>
+
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <caption>Core contracts</caption>
+          <thead><tr><th>Contract</th><th>Address</th></tr></thead>
+          <tbody>
+            <tr><td>PondPool</td><td class="mono-cell">0x82bD35a34891F1D8B543313101C06CF31b8daD1E</td></tr>
+            <tr><td>RiskEngine</td><td class="mono-cell">0xdd7eF595DEea942D05Fd974E6946931ea0DC28A4</td></tr>
+            <tr><td>StockOracle</td><td class="mono-cell">0xaB1C64921dE1928a5C3Ee06bc37fAEa7b5C9D703</td></tr>
+            <tr><td>MarketCalendar</td><td class="mono-cell">0x351866f5f038d7233d3fb14C7dd822F62C0bC881</td></tr>
+            <tr><td>OutcomePool</td><td class="mono-cell">0xdA9E51d56d5F1cBC1d9b3FA69658b9d7F37bA4a1</td></tr>
+            <tr><td>SupplyRebate</td><td class="mono-cell">0x4Ac5031aE0c91c70eC1310E38573757487e6D0B7</td></tr>
+            <tr><td>DepositRouter</td><td class="mono-cell">0xAe087498e85ff50BB59eb91E77f6580d2a3cEE0D</td></tr>
+            <tr><td>Timelock</td><td class="mono-cell">0xe19f3b52922C126781E0e47028D3d2b2411a271d</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <caption>Token</caption>
+          <thead><tr><th>Token</th><th>Address</th></tr></thead>
+          <tbody>
+            <tr><td>POND</td><td class="mono-cell" data-token-table-address>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="docs-callout">
+        <strong>What the token does</strong>
+        <p>POND is separate from the lending protocol. It is not used as collateral, it does not affect borrowing terms, and it does not subsidise the rate paid to suppliers. Supplier yield is interest paid by borrowers and nothing else.</p>
+        <p>Verify the address against this page or the project's own accounts before interacting with it. Tokens with similar names and near-identical addresses are a common way people lose money.</p>
+      </div>
+
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <caption>Assets and price feeds</caption>
+          <thead><tr><th>Asset</th><th>Token</th><th>Feed</th></tr></thead>
+          <tbody>
+            <tr><td>USDG</td><td class="mono-cell">0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168</td><td class="mono-cell">0x32e20B845A6EC481F919fEDC26FCEa60b803167C</td></tr>
+            <tr><td>AAPL</td><td class="mono-cell">0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9</td><td class="mono-cell">0x6B22A786bAa607d76728168703a39Ea9C99f2cD0</td></tr>
+            <tr><td>MSFT</td><td class="mono-cell">0xe93237C50D904957Cf27E7B1133b510C669c2e74</td><td class="mono-cell">0x45C3C877C15E6BA2EBB19eA114Ea508d14C1Af2E</td></tr>
+            <tr><td>GOOGL</td><td class="mono-cell">0x2e0847E8910a9732eB3fb1bb4b70a580ADAD4FE3</td><td class="mono-cell">0xF6f373a037c30F0e5010d854385cA89185AE638b</td></tr>
+            <tr><td>AMZN</td><td class="mono-cell">0x12f190a9F9d7D37a250758b26824B97CE941bF54</td><td class="mono-cell">0xD5a1508ceD74c084eBf3cBe853e2C968fB2a651C</td></tr>
+            <tr><td>META</td><td class="mono-cell">0xc0D6457C16Cc70d6790Dd43521C899C87ce02f35</td><td class="mono-cell">0x7C38C00C30BEe9378381E7B6135d7283356D71b1</td></tr>
+            <tr><td>NVDA</td><td class="mono-cell">0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC</td><td class="mono-cell">0x379EC4f7C378F34a1B47E4F3cbeBCbAC3E8E9F15</td></tr>
+            <tr><td>TSLA</td><td class="mono-cell">0x322F0929c4625eD5bAd873c95208D54E1c003b2d</td><td class="mono-cell">0x4A1166a659A55625345e9515b32adECea5547C38</td></tr>
+            <tr><td>SPCX</td><td class="mono-cell">0x4a0E65A3EcceC6dBe60AE065F2e7bb85Fae35eEa</td><td class="mono-cell">0xB265810950ba6c5C0Ff821c9963014a56fD8Bffb</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="docs-callout">
+        <strong>USDG pricing</strong>
+        <p>No Chainlink feed for USDG exists on Robinhood Chain, so the loan asset is priced by a fixed one dollar adapter. That contract reports what governance sets and cannot observe a depeg. Governance can mark it down and the operator can halt it, which stops all valuation rather than continuing at a figure nobody believes. It will be replaced with a market feed as soon as one is published.</p>
+      </div>
+
+      <h3>Previous deployments</h3>
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <caption>Superseded, still live and still withdrawable</caption>
+          <thead><tr><th>Deployment</th><th>PondPool</th></tr></thead>
+          <tbody>
+            <tr><td>28 August 2026</td><td class="mono-cell">0x837f9568b7Cdb95D4188122Bb45971Cb28311449</td></tr>
+            <tr><td>28 August 2026 oracle</td><td class="mono-cell">0xE9AA60f6dDD88ba21AEdcB0E2Beaf8C66368b7b1</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Pond's contracts are immutable. Nobody can replace the code holding your funds, including us, and that guarantee is the reason a new version means new addresses rather than an upgrade in place.</p>
+      <p>The trade-off is that positions do not move by themselves. Rather than announcing a deadline and asking people to withdraw, the app reads every past deployment and shows what an account still holds in each, with the controls to retrieve it. A position in an old deployment stays valid and withdrawable indefinitely. There is no expiry and nothing at risk.</p>
+      <p>Old contracts also remain live, which means they still accept deposits from anyone who has the address. Use the interface rather than interacting with an old address directly.</p>
+
+      <h3>Governance status</h3>
+      <p>Governance of every contract is being transferred to the timelock: the calendar, oracle, risk engine, pool, outcome pool and supply rebate. <strong>Until each transfer is accepted, the deploying address retains control.</strong> That is checkable on chain by calling <code>governance()</code> on any of them, and worth checking rather than taking on trust.</p>
+        <p>Once accepted, every parameter change passes through a three day delay and is publicly visible in the timelock queue before it takes effect.</p>
+    </section>
+
+    <section class="docs-section" id="glossary">
+      <h2>Glossary</h2>
+      <dl class="docs-glossary">
+        <dt>Loan to value</dt>
+        <dd>The proportion of a collateral holding's value that may be borrowed against it. Acre's varies with the market clock and the earnings calendar.</dd>
+
+        <dt>Liquidation threshold</dt>
+        <dd>The debt to collateral ratio above which a position may be liquidated. Always higher than the loan to value, so a new borrow is never immediately liquidatable. Does not vary with time.</dd>
+
+        <dt>Close factor</dt>
+        <dd>The maximum proportion of a borrower's debt that a single liquidation call may repay.</dd>
+
+        <dt>Correlation group</dt>
+        <dd>A set of collateral assets treated as one exposure when measuring portfolio concentration.</dd>
+
+        <dt>Utilisation</dt>
+        <dd>Borrowed assets divided by supplied assets. Drives the base borrowing rate.</dd>
+
+        <dt>Reserve factor</dt>
+        <dd>The share of interest retained by the protocol rather than paid to suppliers.</dd>
+
+        <dt>Corporate action multiplier</dt>
+        <dd>The ERC-8056 scaling factor by which a tokenized stock expresses splits and dividends without changing raw balances.</dd>
+
+        <dt>Provisioned horizon</dt>
+        <dd>The last date for which the market calendar holds holiday data. Beyond it the calendar reports Unknown and the protocol applies its most conservative parameters.</dd>
+      </dl>
+    </section>
+
+  </div>
+</main>
+
+<footer class="company-footer">
+  <div class="container">
+    <div class="footer-tier footer-brand-tier">
+      <div class="footer-brand-block">
+        <img class="footer-mark" src="assets/acre-mark-128.png" alt="Pond logo">
+        <div>
+          <strong class="footer-name">Pond</strong>
+          <p>A lending market for tokenized real-world assets, built on Robinhood Chain, where borrowing and collateral terms follow the trading calendar of the underlying security.</p>
+        </div>
+      </div>
+      <a class="footer-x" href="https://x.com/usePond" target="_blank" rel="noopener noreferrer" aria-label="Pond on X">
+        <img src="assets/x.svg" alt=""><span>@usePond</span>
+      </a>
+    </div>
+    <div class="footer-tier footer-links-tier">
+      <div class="footer-col"><strong>Product</strong><a href="app.html">App</a><a href="docs.html">Documentation</a><a href="index.html#market-clock">Market clock</a></div>
+      <div class="footer-col"><strong>Protocol</strong><a href="docs.html#contracts">Contract addresses</a><a href="docs.html#calendar">Market calendar</a><a href="docs.html#liquidation">Liquidation</a><a href="docs.html#governance">Governance</a></div>
+      <div class="footer-col"><strong>Company</strong><a href="vision.html">Vision</a><a href="https://x.com/usePond" target="_blank" rel="noopener noreferrer">X / @usePond</a><a href="docs.html#risks">Risk disclosures</a><a href="docs.html#glossary">Glossary</a><a href="check.html">Check an address</a><a href="app.html#transfers">Deposit by transfer</a></div>
+      <div class="footer-col footer-token">
+        <strong>POND token</strong>
+        <span class="footer-address-note">Token address will be announced officially.</span>
+      </div>
+    </div>
+    <div class="footer-tier footer-legal-tier">
+      <div class="legal-block">
+        <p><strong>Instrument.</strong> Tokenized stock on Robinhood Chain is a tokenized debt security. It provides economic exposure to the price of an underlying security and confers no ownership, no voting rights and no legal claim against the issuer of that security. Holders carry the credit risk of the token issuer in addition to the price risk of the underlying asset.</p>
+        <p><strong>Risk.</strong> Borrowing against volatile collateral carries the risk of liquidation and loss of the collateral posted. Overnight and weekend price gaps are a material hazard, and the protocol's conservative closed-window terms reduce that exposure without eliminating it. Smart contract risk and oracle risk apply. Pond has not been independently audited, and protocol-level supply and borrow caps are in place accordingly.</p>
+        <p><strong>Availability.</strong> Tokenized equities are not available to users in the United States, and Pond restricts access accordingly. Nothing on this site is financial, investment, tax or legal advice, or an offer of any product in any jurisdiction.</p>
+      </div>
+      <div class="footer-meta"><span>© 2026 Pond</span><span>Built on Robinhood Chain</span></div>
+    </div>
+  </div>
+</footer>
+
+<script src="acre-config8623.js?v=autosync_v1"></script>
+<script src="script3934.js?v=waterdrop_v4"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v3d52b47920f24c319d37e2661827c42b1787588026925" integrity="sha512-d9sL6GJLXn6fInD1+TVXhTcQOsmxeHfmHAvwGDIxp5TO+uo1fiWW7mHomMj4MLRlCsJDTqXzWLHJFFlPCEIj/A==" data-cf-beacon='{"version":"2024.11.0","token":"623fa1aaf4ce483bb99c02f93d680948","r":1}' crossorigin="anonymous"></script>
+</body>
+
+<!-- Mirrored from useacre.xyz/docs.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 31 Aug 2026 14:20:05 GMT -->
+</html>

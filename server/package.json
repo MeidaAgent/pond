@@ -1,0 +1,40 @@
+{
+  "name": "usepond-backend",
+  "version": "1.0.0",
+  "description": "Backend service for usepond.xyz - provides REST API for the Pond protocol frontend (supply, borrow, transfers, watch, check, market, positions, outcome, rebate, legacy).",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "pond",
+    "defi",
+    "robinhood-chain",
+    "lending",
+    "borrow",
+    "supply",
+    "rest-api"
+  ],
+  "author": "Pond Engineering",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.10",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.5.3"
+  }
+}

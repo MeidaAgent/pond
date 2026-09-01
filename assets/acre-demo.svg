@@ -1,0 +1,291 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675"
+     role="img" aria-labelledby="demo-title demo-desc">
+  <title id="demo-title">How to lend and borrow on Pond</title>
+  <desc id="demo-desc">A fifteen second walkthrough: connect a wallet, supply USDG to earn the
+  borrowing rate, or post tokenized equities as collateral and borrow against them. Terms follow
+  the trading calendar of the underlying market.</desc>
+
+  <!--
+    Self contained animated SVG. Fifteen seconds, four scenes, looping.
+
+    Everything is CSS keyframes rather than SMIL, because CSS animation still runs when the
+    file is loaded through an img tag while SMIL support is patchy. There is no script and
+    no external font, so it renders identically wherever it is embedded and cannot be
+    affected by a Content Security Policy.
+
+    Scene timing as a share of the fifteen second loop:
+      Scene 1  0.0s to  3.5s    0% to 23.3%   connect
+      Scene 2  3.5s to  7.5s   23.3% to 50%   supply and earn
+      Scene 3  7.5s to 11.5s   50% to 76.7%   collateral and borrow
+      Scene 4 11.5s to 15.0s   76.7% to 100%  terms follow the clock
+  -->
+
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fdfcff"/>
+      <stop offset="1" stop-color="#f4f1fb"/>
+    </linearGradient>
+
+    <linearGradient id="lav" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7f61e8"/>
+      <stop offset="1" stop-color="#a98cf5"/>
+    </linearGradient>
+
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#43307c" flood-opacity="0.10"/>
+    </filter>
+
+    <style>
+      /* Type. No webfont, because an SVG loaded as an image cannot fetch one. The stacks
+         fall back to whatever the platform has, which keeps the file self contained. */
+      .sans  { font-family: Inter, "Helvetica Neue", Arial, sans-serif; }
+      .mono  { font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace; }
+
+      .ink   { fill: #171323; }
+      .muted { fill: #5f566d; }
+      .accent{ fill: #6546c4; }
+      .white { fill: #ffffff; }
+
+      .h1     { font-size: 46px; font-weight: 700; letter-spacing: -1.2px; }
+      .h2     { font-size: 27px; font-weight: 600; letter-spacing: -0.4px; }
+      .body   { font-size: 19px; font-weight: 400; }
+      .label  { font-size: 13px; font-weight: 700; letter-spacing: 1.6px; }
+      .figure { font-size: 40px; font-weight: 600; letter-spacing: -1px; }
+      .small  { font-size: 15px; }
+
+      .card { fill: #ffffff; stroke: #e6e1f2; stroke-width: 1.5; }
+
+      /* Each scene fades in, holds, and fades out. Percentages are of the whole loop. */
+      .scene { opacity: 0; }
+
+      .s1 { animation: scene1 15s linear infinite; }
+      .s2 { animation: scene2 15s linear infinite; }
+      .s3 { animation: scene3 15s linear infinite; }
+      .s4 { animation: scene4 15s linear infinite; }
+
+      @keyframes scene1 {
+        0%    { opacity: 0; transform: translateY(14px); }
+        3%    { opacity: 1; transform: translateY(0); }
+        20%   { opacity: 1; transform: translateY(0); }
+        23.3% { opacity: 0; transform: translateY(-10px); }
+        100%  { opacity: 0; transform: translateY(-10px); }
+      }
+      @keyframes scene2 {
+        0%    { opacity: 0; transform: translateY(14px); }
+        23.3% { opacity: 0; transform: translateY(14px); }
+        27%   { opacity: 1; transform: translateY(0); }
+        46%   { opacity: 1; transform: translateY(0); }
+        50%   { opacity: 0; transform: translateY(-10px); }
+        100%  { opacity: 0; transform: translateY(-10px); }
+      }
+      @keyframes scene3 {
+        0%    { opacity: 0; transform: translateY(14px); }
+        50%   { opacity: 0; transform: translateY(14px); }
+        54%   { opacity: 1; transform: translateY(0); }
+        73%   { opacity: 1; transform: translateY(0); }
+        76.7% { opacity: 0; transform: translateY(-10px); }
+        100%  { opacity: 0; transform: translateY(-10px); }
+      }
+      @keyframes scene4 {
+        0%    { opacity: 0; transform: translateY(14px); }
+        76.7% { opacity: 0; transform: translateY(14px); }
+        80%   { opacity: 1; transform: translateY(0); }
+        97%   { opacity: 1; transform: translateY(0); }
+        100%  { opacity: 0; }
+      }
+
+      /* Elements that arrive slightly after their scene, so a scene reads in order
+         rather than landing all at once. */
+      .beat1 { animation-delay: 0.35s; }
+      .beat2 { animation-delay: 0.7s; }
+      .beat3 { animation-delay: 1.05s; }
+
+      /* The progress bar across the foot of the frame. */
+      .progress { animation: progress 15s linear infinite; transform-origin: left center; }
+      @keyframes progress {
+        0%   { transform: scaleX(0); }
+        100% { transform: scaleX(1); }
+      }
+
+      /* Step pips light as their scene runs. */
+      .pip { fill: #ddd6ef; }
+      .pip1 { animation: pip1 15s linear infinite; }
+      .pip2 { animation: pip2 15s linear infinite; }
+      .pip3 { animation: pip3 15s linear infinite; }
+      .pip4 { animation: pip4 15s linear infinite; }
+      @keyframes pip1 { 0%,23.2% { fill:#7f61e8 } 23.3%,100% { fill:#ddd6ef } }
+      @keyframes pip2 { 0%,23.2% { fill:#ddd6ef } 23.3%,49.9% { fill:#7f61e8 } 50%,100% { fill:#ddd6ef } }
+      @keyframes pip3 { 0%,49.9% { fill:#ddd6ef } 50%,76.6% { fill:#7f61e8 } 76.7%,100% { fill:#ddd6ef } }
+      @keyframes pip4 { 0%,76.6% { fill:#ddd6ef } 76.7%,100% { fill:#7f61e8 } }
+
+      /* The counting figure in scene two. Stepped rather than smooth, so it reads as a
+         number ticking up rather than a blur. */
+      .tick { animation: tick 15s steps(1) infinite; }
+      @keyframes tick {
+        0%,27%    { opacity: 0 }
+        27%,50%   { opacity: 1 }
+        50%,100%  { opacity: 0 }
+      }
+
+      /* The weekly track in scene four fills left to right, with the weekend gap left
+         empty, which is the entire idea of the protocol in one movement. */
+      .week { animation: week 15s ease-out infinite; transform-origin: left center; }
+      @keyframes week {
+        0%,80%   { transform: scaleX(0); }
+        90%,100% { transform: scaleX(1); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .s1, .s2, .s3, .s4, .progress, .pip1, .pip2, .pip3, .pip4, .tick, .week {
+          animation: none;
+        }
+        /* With motion disabled the first scene is shown statically rather than a blank
+           frame, so the file still communicates something. */
+        .s1 { opacity: 1; }
+      }
+    </style>
+  </defs>
+
+  <rect width="1200" height="675" fill="url(#paper)"/>
+
+  <!-- Persistent brand mark and step pips -->
+  <g class="mono label accent">
+    <text x="72" y="76" letter-spacing="3">POND</text>
+  </g>
+  <text x="1128" y="76" class="mono label muted" text-anchor="end" letter-spacing="2">ROBINHOOD CHAIN</text>
+
+  <g>
+    <circle class="pip pip1" cx="72"  cy="612" r="5"/>
+    <circle class="pip pip2" cx="94"  cy="612" r="5"/>
+    <circle class="pip pip3" cx="116" cy="612" r="5"/>
+    <circle class="pip pip4" cx="138" cy="612" r="5"/>
+  </g>
+
+  <rect x="72" y="638" width="1056" height="3" rx="1.5" fill="#e6e1f2"/>
+  <rect class="progress" x="72" y="638" width="1056" height="3" rx="1.5" fill="url(#lav)"/>
+
+  <!-- ============================ SCENE 1: CONNECT ============================ -->
+  <g class="scene s1">
+    <text x="72" y="250" class="mono label accent" letter-spacing="2">STEP ONE</text>
+    <text x="72" y="322" class="sans h1 ink">Connect a wallet.</text>
+    <text x="72" y="372" class="sans body muted">Nothing is required to look. A wallet is needed only to act.</text>
+
+    <g filter="url(#soft)">
+      <rect x="760" y="248" width="368" height="118" rx="18" class="card"/>
+    </g>
+    <circle cx="806" cy="307" r="17" fill="#eee9ff"/>
+    <circle cx="806" cy="307" r="6" fill="#7f61e8"/>
+    <text x="842" y="299" class="mono small muted">WALLET</text>
+    <text x="842" y="325" class="mono ink" font-size="17">0x8c89…b75e</text>
+
+    <g class="scene s1 beat1">
+      <rect x="760" y="392" width="196" height="52" rx="26" fill="#171323"/>
+      <text x="858" y="424" class="mono white" font-size="15" text-anchor="middle">CONNECTED</text>
+    </g>
+  </g>
+
+  <!-- ========================= SCENE 2: SUPPLY AND EARN ======================== -->
+  <g class="scene s2">
+    <text x="72" y="230" class="mono label accent" letter-spacing="2">STEP TWO, TO EARN</text>
+    <text x="72" y="302" class="sans h1 ink">Supply USDG.</text>
+    <text x="72" y="352" class="sans body muted">You earn the rate borrowers pay. No emissions,</text>
+    <text x="72" y="382" class="sans body muted">no lockup. Redeem at any block.</text>
+
+    <g filter="url(#soft)">
+      <rect x="700" y="212" width="428" height="252" rx="20" class="card"/>
+    </g>
+
+    <text x="736" y="258" class="mono small muted" letter-spacing="1.4">YOU DEPOSIT</text>
+    <text x="736" y="306" class="mono figure ink">1,000 USDG</text>
+
+    <line x1="736" y1="338" x2="1092" y2="338" stroke="#eee9ff" stroke-width="1.5"/>
+
+    <g class="tick">
+      <text x="736" y="380" class="mono small muted" letter-spacing="1.4">YOU EARN</text>
+      <text x="736" y="428" class="mono figure accent">the borrow rate</text>
+    </g>
+
+    <g class="scene s2 beat2">
+      <rect x="72" y="424" width="470" height="72" rx="14" fill="#f2eeff"/>
+      <text x="96" y="454" class="mono small accent" letter-spacing="1.2">HIGHEST WHEN THE MARKET IS SHUT</text>
+      <text x="96" y="480" class="sans small muted">Carrying leverage overnight and at weekends costs more.</text>
+    </g>
+  </g>
+
+  <!-- ====================== SCENE 3: COLLATERAL AND BORROW ===================== -->
+  <g class="scene s3">
+    <text x="72" y="230" class="mono label accent" letter-spacing="2">OR, TO BORROW</text>
+    <text x="72" y="302" class="sans h1 ink">Post tokenized equities.</text>
+    <text x="72" y="352" class="sans body muted">Draw USDG against NVDA, TSLA or SPCX without selling.</text>
+    <text x="72" y="382" class="sans body muted">You keep the exposure.</text>
+
+    <g filter="url(#soft)">
+      <rect x="700" y="196" width="428" height="284" rx="20" class="card"/>
+    </g>
+
+    <text x="736" y="242" class="mono small muted" letter-spacing="1.4">COLLATERAL</text>
+
+    <g>
+      <rect x="736" y="262" width="86" height="34" rx="9" fill="#f2eeff"/>
+      <text x="779" y="285" class="mono accent" font-size="15" text-anchor="middle">NVDA</text>
+
+      <g class="scene s3 beat1">
+        <rect x="832" y="262" width="86" height="34" rx="9" fill="#f2eeff"/>
+        <text x="875" y="285" class="mono accent" font-size="15" text-anchor="middle">TSLA</text>
+      </g>
+      <g class="scene s3 beat2">
+        <rect x="928" y="262" width="86" height="34" rx="9" fill="#f2eeff"/>
+        <text x="971" y="285" class="mono accent" font-size="15" text-anchor="middle">SPCX</text>
+      </g>
+    </g>
+
+    <line x1="736" y1="330" x2="1092" y2="330" stroke="#eee9ff" stroke-width="1.5"/>
+
+    <g class="scene s3 beat3">
+      <text x="736" y="372" class="mono small muted" letter-spacing="1.4">YOU CAN BORROW</text>
+      <text x="736" y="420" class="mono figure ink">up to your limit</text>
+      <text x="736" y="452" class="sans small muted">Which moves with the market clock.</text>
+    </g>
+  </g>
+
+  <!-- ====================== SCENE 4: TERMS FOLLOW THE CLOCK ==================== -->
+  <g class="scene s4">
+    <text x="72" y="212" class="mono label accent" letter-spacing="2">WHY IT IS DIFFERENT</text>
+    <text x="72" y="284" class="sans h1 ink">The token trades.<tspan x="72" dy="56">The market sleeps.</tspan></text>
+
+    <text x="72" y="418" class="sans body muted">Tokenized equities move around the clock. The shares beneath</text>
+    <text x="72" y="448" class="sans body muted">them do not. Pond prices that gap instead of ignoring it.</text>
+
+    <!-- A week: five open sessions, then the weekend gap left deliberately empty. -->
+    <g transform="translate(700, 250)">
+      <text x="0" y="0" class="mono small muted" letter-spacing="1.4">ONE WEEK</text>
+
+      <g class="week">
+        <rect x="0"   y="24" width="56" height="46" rx="8" fill="url(#lav)"/>
+        <rect x="64"  y="24" width="56" height="46" rx="8" fill="url(#lav)"/>
+        <rect x="128" y="24" width="56" height="46" rx="8" fill="url(#lav)"/>
+        <rect x="192" y="24" width="56" height="46" rx="8" fill="url(#lav)"/>
+        <rect x="256" y="24" width="56" height="46" rx="8" fill="url(#lav)"/>
+      </g>
+
+      <rect x="320" y="24" width="120" height="46" rx="8" fill="none"
+            stroke="#c9bff0" stroke-width="1.5" stroke-dasharray="5 5"/>
+
+      <text x="0"   y="92" class="mono muted" font-size="13">M</text>
+      <text x="64"  y="92" class="mono muted" font-size="13">T</text>
+      <text x="128" y="92" class="mono muted" font-size="13">W</text>
+      <text x="192" y="92" class="mono muted" font-size="13">T</text>
+      <text x="256" y="92" class="mono muted" font-size="13">F</text>
+      <text x="320" y="92" class="mono accent" font-size="13">CLOSED, 60 HOURS</text>
+
+      <g class="scene s4 beat3">
+        <text x="0" y="146" class="sans small muted">Borrowing terms tighten as that gap approaches,</text>
+        <text x="0" y="172" class="sans small muted">and the rate paid to suppliers rises.</text>
+      </g>
+    </g>
+
+    <g class="scene s4 beat3">
+      <text x="72" y="530" class="mono ink" font-size="19" letter-spacing="1">usepond.xyz</text>
+    </g>
+  </g>
+</svg>

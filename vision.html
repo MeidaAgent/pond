@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+
+<!-- Mirrored from useacre.xyz/vision.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 31 Aug 2026 14:20:01 GMT -->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Why $2.8B of tokenized equities sits idle, how Pond prices the trading calendar of the underlying market, and what comes next.">
+  <title>Vision — Pond</title>
+  <meta property="og:title" content="Pond: credit that follows the market underneath">
+  <meta property="og:description" content="Tokenized equities trade around the clock against a market that is shut sixty hours a week. Pond prices that.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="assets/acre-mark-128.png">
+<link rel="stylesheet" href="styles614e.css?v=frosteddocs_v13">
+</head>
+<body class="acre-docs">
+<div class="docs-nav-shell">
+  <nav class="floating-nav container" aria-label="Primary navigation">
+    <a class="brand" href="index.html"><img src="assets/acre-mark-128.png" alt="Pond logo"><span>Pond</span></a>
+    <button class="menu" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="marketing-nav-links"><span></span><span></span></button>
+    <div class="nav-links" id="marketing-nav-links">
+      <a href="index.html#thesis">Thesis</a><a href="index.html#system">System</a><a href="index.html#risk">Risk</a><a href="vision.html" aria-current="page">Vision</a><a href="docs.html">Docs</a>
+      <a class="mobile-x-link" href="https://x.com/usePond" target="_blank" rel="noopener noreferrer" aria-label="Pond on X"><img src="assets/x.svg" alt="">X</a>
+    </div>
+    <div class="nav-tools"><a class="nav-x" href="https://x.com/usePond" target="_blank" rel="noopener noreferrer" aria-label="Pond on X"><img src="assets/x.svg" alt=""></a><a class="nav-launch" href="app.html">Launch app <span>↗</span></a></div>
+  </nav>
+</div>
+<main class="docs-main">
+
+  <aside class="docs-toc" aria-label="On this page">
+    <div class="docs-toc-inner">
+      <strong>On this page</strong>
+      <a href="#position">Where this stands</a>
+      <a href="#gap">The gap</a>
+      <a href="#calendar">Pricing the calendar</a>
+      <a href="#access">The access problem</a>
+      <a href="#built">What is built</a>
+      <a href="#next">What comes next</a>
+      <a href="#honest">What could go wrong</a>
+    </div>
+  </aside>
+
+  <div class="docs-body">
+
+    <section class="docs-section" id="position">
+        <div class="eyebrow">Vision</div>
+        <h1>Credit that follows the market underneath.</h1>
+        <p class="lede">Tokenized equities are a $2.8B market that mostly sits idle. Not for lack
+           of demand. The reasons are structural, and both of them are fixable.</p>
+
+        <h2>Where this stands</h2>
+        <p>Worth saying first, because everything below reads differently without it. Pond launched
+           at the end of August 2026. It holds a few hundred dollars, almost all of it our own. It
+           has not been independently audited. Supply and borrow caps are deliberately small and
+           will stay that way until it has been.</p>
+        <p>What follows is an argument about a market and a plan for addressing it, not a claim
+           about a position we already hold.</p>
+      </section>
+
+      <section class="docs-section" id="gap">
+        <h2>The gap</h2>
+        <p>Roughly $2.8B of tokenized equities exist across chains, held by more than a million
+           addresses. Almost none of it is doing anything. That is not a demand problem: people
+           who hold appreciating assets have always wanted to borrow against them rather than
+           sell.</p>
+        <p>Two things stop it, and they are different in kind.</p>
+
+        <div class="docs-table-wrap">
+          <table class="docs-table">
+            <caption>Why the supply is idle</caption>
+            <thead><tr><th>Barrier</th><th>Consequence</th></tr></thead>
+            <tbody>
+              <tr><td>Risk models built for continuously traded assets</td><td>Lending against them is either mispriced or avoided</td></tr>
+              <tr><td>Holders in apps that cannot call contracts</td><td>Excluded from every lending market by construction</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>The first is a modelling failure. The second is a plumbing one. Pond addresses both, and
+           they need entirely different work.</p>
+      </section>
+
+      <section class="docs-section" id="calendar">
+        <h2>Pricing the calendar</h2>
+        <p>Every lending protocol assumes it can sell collateral to cover a position that has gone
+           bad. For a governance token that holds: there is a book at three in the morning on a
+           Sunday. For a tokenized share of Apple it is false for sixty hours every week.</p>
+        <p>A tokenized share trades continuously. The equity underneath it does not. Between the
+           Friday close and the Monday open there is no exchange to liquidate into, no price
+           discovery, and no way for a borrower to add collateral if the underlying gaps. Protocols
+           in this category inherit a risk model designed for assets that trade every second of
+           their existence, and apply it to assets that do not.</p>
+        <p>Pond prices that directly. Borrowing capacity and rates follow the trading calendar of
+           the asset underneath, tightening through Friday afternoon and across the weekend, and
+           widening again at the open. Capacity also tightens around a company's earnings date,
+           when single-name gap risk is highest.</p>
+        <p>One decision worth stating because it is counterintuitive: the liquidation threshold
+           does <em>not</em> move with the clock. Only borrowing capacity does. A threshold that
+           tightened at the close would mass-liquidate every borrower at four o'clock on a Friday,
+           which is precisely the outcome the design exists to prevent.</p>
+        <p>Collateral is also scored as a portfolio rather than a list. Holding Apple, Microsoft,
+           Alphabet, Amazon, Meta and NVIDIA is one bet on large technology, not six positions, and
+           treating it as six would hand a concentrated portfolio the capacity of a diversified
+           one.</p>
+      </section>
+
+      <section class="docs-section" id="access">
+        <h2>The access problem</h2>
+        <p>The second barrier is less discussed and probably larger. Most tokenized equities are
+           held in consumer apps: embedded wallets, gasless trading, one-tap onboarding. Those apps
+           can send a token. They cannot call an arbitrary contract.</p>
+        <p>Every lending market, including this one until recently, requires an approve followed by
+           a deposit. That is two contract calls, and it excludes the majority of the supply in the
+           category before anyone reaches a question about rates.</p>
+        <p>Pond now works by plain transfer. Every account has addresses derived from its own:
+           send the loan asset to one and it becomes a supply position, send your position tokens
+           back and the underlying returns, send the loan asset to a third and your debt falls. No
+           connection, no approval, no contract call.</p>
+        <p>There is deliberately no borrow address. These addresses cannot tell who sent to them,
+           which is exactly what makes them work, and for borrowing that property would be
+           dangerous: anyone could send a trivial amount and put somebody into debt they never
+           asked for. Lending works this way. Borrowing needs a wallet that can sign.</p>
+      </section>
+
+      <section class="docs-section" id="built">
+        <h2>What is built</h2>
+        <p>All of the following is deployed on Robinhood Chain. Addresses are listed in the
+           <a href="docs.html#contracts">documentation</a>.</p>
+
+        <div class="docs-table-wrap">
+          <table class="docs-table">
+            <caption>Live</caption>
+            <thead><tr><th>Component</th><th>What it does</th></tr></thead>
+            <tbody>
+              <tr><td>Session-aware lending market</td><td>Supply, borrow, repay and withdraw with terms that follow the trading calendar</td></tr>
+              <tr><td>Eight collateral assets</td><td>AAPL, MSFT, GOOGL, AMZN, META, NVDA, TSLA, SPCX, scored across correlation groups</td></tr>
+              <tr><td>Risk tier framework</td><td>Assets listed against published parameter sets rather than hand-tuned individually, with per-asset exposure caps</td></tr>
+              <tr><td>Partial liquidation</td><td>Timed auction in slices, with a discount that starts at zero and rises, rather than seizing a whole position at once</td></tr>
+              <tr><td>Auto-deleverage</td><td>A position reduces itself before the close, funded from a buffer the borrower sets aside</td></tr>
+              <tr><td>Deposit by transfer</td><td>Lending without a wallet connection, for holders in apps that cannot call contracts</td></tr>
+              <tr><td>Defined outcome pools</td><td>Fully collateralised protection: a floor under an asset for a fixed window, with someone else earning the premium</td></tr>
+              <tr><td>Supply rebate</td><td>A share of the protocol fee returned to suppliers holding POND, funded from the reserve rather than from emissions</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="docs-section" id="next">
+        <h2>What comes next</h2>
+        <p>In order of what unblocks the most, rather than what is most interesting to build.</p>
+
+        <h3>An independent audit</h3>
+        <p>The single largest constraint. Everything is covered by our own test suite and a set of
+           stateful invariants, but those were written by the same people who wrote the contracts,
+           which finds a great deal and does not find what an adversary finds. Until an audit
+           exists the caps must stay small, and while they are small nobody can deposit
+           meaningfully. This is a spending decision rather than an engineering one.</p>
+
+        <h3>Higher caps, in steps</h3>
+        <p>Raised against time running without incident and against audit findings being closed,
+           not against a date. The current figures bound what a contract bug can take from
+           anybody, which is the entire reason they exist.</p>
+
+        <h3>Fixed-rate, fixed-term borrowing</h3>
+        <p>Variable rates are a convention of decentralised lending rather than a preference anyone
+           expressed. Somebody borrowing against Apple for three months should be able to know what
+           it costs before they start. Nothing in the category offers this today.</p>
+
+        <h3>More collateral, faster</h3>
+        <p>The tier framework reduces listing an asset to a single decision against a published
+           parameter set, recorded on chain for anyone who wants to argue with it. That is what
+           makes going from eight assets to fifty a routine operation rather than fifty separate
+           private judgements.</p>
+
+        <h3>Earnings-aware capacity, extended</h3>
+        <p>Capacity already tightens around a company's report. The same machinery can price other
+           scheduled events where gap risk is concentrated and where a continuous market does not
+           exist to absorb them.</p>
+      </section>
+
+      <section class="docs-section" id="honest">
+        <h2>What could go wrong</h2>
+        <p>A plan that only describes the good outcome is not a plan.</p>
+        <p><strong>The category might not grow.</strong> Tokenized equities may stay a curiosity.
+           Pond is a bet that they do not, and being early to a market that never arrives is
+           indistinguishable from being wrong.</p>
+        <p><strong>The contracts are unaudited.</strong> They may contain a fault our tests do not
+           reach. The caps limit the damage; they do not eliminate it, and nobody should deposit
+           more than they would accept losing outright.</p>
+        <p><strong>The approach is copyable.</strong> Nothing here is patented. A larger protocol
+           could price the trading calendar too. The advantage is having built it first and
+           understanding why each decision was made, which is real but not permanent.</p>
+        <p><strong>Access may stay closed.</strong> Deposit by transfer works for lending. It
+           cannot enable borrowing safely, and whether the apps holding most of this supply ever
+           allow contract calls is not something we control.</p>
+      </section>
+  </div>
+</main>
+
+<footer class="company-footer">
+  <div class="container">
+    <div class="footer-tier footer-brand-tier">
+      <div class="footer-brand-block">
+        <img class="footer-mark" src="assets/acre-mark-128.png" alt="Pond logo">
+        <div>
+          <strong class="footer-name">Pond</strong>
+          <p>A lending market for tokenized real-world assets, built on Robinhood Chain, where borrowing and collateral terms follow the trading calendar of the underlying security.</p>
+        </div>
+      </div>
+      <a class="footer-x" href="https://x.com/usePond" target="_blank" rel="noopener noreferrer" aria-label="Pond on X">
+        <img src="assets/x.svg" alt=""><span>@usePond</span>
+      </a>
+    </div>
+    <div class="footer-tier footer-links-tier">
+      <div class="footer-col"><strong>Product</strong><a href="app.html">App</a><a href="docs.html">Documentation</a><a href="index.html#market-clock">Market clock</a></div>
+      <div class="footer-col"><strong>Protocol</strong><a href="docs.html#contracts">Contract addresses</a><a href="docs.html#calendar">Market calendar</a><a href="docs.html#liquidation">Liquidation</a><a href="docs.html#governance">Governance</a></div>
+      <div class="footer-col"><strong>Company</strong><a href="vision.html">Vision</a><a href="https://x.com/usePond" target="_blank" rel="noopener noreferrer">X / @usePond</a><a href="docs.html#risks">Risk disclosures</a><a href="docs.html#glossary">Glossary</a><a href="check.html">Check an address</a><a href="app.html#transfers">Deposit by transfer</a></div>
+      <div class="footer-col footer-token">
+        <strong>POND token</strong>
+        <span class="footer-address-note">Token address will be announced officially.</span>
+      </div>
+    </div>
+    <div class="footer-tier footer-legal-tier">
+      <div class="legal-block">
+        <p><strong>Instrument.</strong> Tokenized stock on Robinhood Chain is a tokenized debt security. It provides economic exposure to the price of an underlying security and confers no ownership, no voting rights and no legal claim against the issuer of that security. Holders carry the credit risk of the token issuer in addition to the price risk of the underlying asset.</p>
+        <p><strong>Risk.</strong> Borrowing against volatile collateral carries the risk of liquidation and loss of the collateral posted. Overnight and weekend price gaps are a material hazard, and the protocol's conservative closed-window terms reduce that exposure without eliminating it. Smart contract risk and oracle risk apply. Pond has not been independently audited, and protocol-level supply and borrow caps are in place accordingly.</p>
+        <p><strong>Availability.</strong> Tokenized equities are not available to users in the United States, and Pond restricts access accordingly. Nothing on this site is financial, investment, tax or legal advice, or an offer of any product in any jurisdiction.</p>
+      </div>
+      <div class="footer-meta"><span>© 2026 Pond</span><span>Built on Robinhood Chain</span></div>
+    </div>
+  </div>
+</footer>
+
+<script src="acre-config8623.js?v=autosync_v1"></script>
+<script src="script3934.js?v=waterdrop_v4"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v3d52b47920f24c319d37e2661827c42b1787588026925" integrity="sha512-d9sL6GJLXn6fInD1+TVXhTcQOsmxeHfmHAvwGDIxp5TO+uo1fiWW7mHomMj4MLRlCsJDTqXzWLHJFFlPCEIj/A==" data-cf-beacon='{"version":"2024.11.0","token":"623fa1aaf4ce483bb99c02f93d680948","r":1}' crossorigin="anonymous"></script>
+</body>
+
+<!-- Mirrored from useacre.xyz/vision.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 31 Aug 2026 14:20:01 GMT -->
+</html>
