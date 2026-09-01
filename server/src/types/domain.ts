@@ -7,7 +7,7 @@
  * to the same constants the contracts use.
  */
 
-export type HexAddress = `0x${string}`;
+export type HexAddress = `0x${string}` | string;
 export type BigIntString = string;
 
 export interface PoolTotals {

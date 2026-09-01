@@ -7,7 +7,7 @@
  */
 
 export interface TokenMeta {
-  address: `0x${string}`;
+  address: `0x${string}` | string;
   symbol: string;
   name?: string;
   decimals: number;
