@@ -626,6 +626,8 @@ p{color:var(--muted);line-height:1.65}
     radial-gradient(circle at 88% 18%,rgba(125,95,230,.22),transparent 36rem),
     radial-gradient(circle at 50% 65%,rgba(195,175,255,.18),transparent 45rem),
     linear-gradient(180deg,#f7f4ff 0%,#ede6fb 50%,#f4f0ff 100%);
+  background-attachment:fixed;
+  background-size:cover;
   color:var(--ink);
   overflow-x:hidden;
 }
